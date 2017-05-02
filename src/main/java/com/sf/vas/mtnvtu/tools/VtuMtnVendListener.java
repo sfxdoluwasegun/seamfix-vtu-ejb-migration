@@ -3,6 +3,8 @@
  */
 package com.sf.vas.mtnvtu.tools;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
@@ -18,7 +20,9 @@ import javax.jms.ObjectMessage;
 
 import org.jboss.logging.Logger;
 
+import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.Settings;
+import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
@@ -83,7 +87,13 @@ public class VtuMtnVendListener implements MessageListener {
 					log.error("Error handling vtu request", e);
 					vtuTransactionLog.setVtuStatus(Status.FAILED);
 					
+					TopupHistory topupHistory = vtuTransactionLog.getTopupHistory(); 
+					
+					topupHistory.setStatus(Status.FAILED);
+					topupHistory.setFailureReason("VTU VEND ERROR");
+					
 					vtuQueryService.update(vtuTransactionLog);
+					vtuQueryService.update(topupHistory);
 				}
 			}
 		} catch (Exception e) {
@@ -112,8 +122,6 @@ public class VtuMtnVendListener implements MessageListener {
 			vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
 		}
 		
-		log.info("vendStatusCode : "+vendStatusCode);
-		
 //		ideally this should only happen once
 		while(vendStatusCode != null && VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.equals(vendStatusCode)){
 			currentSequence = Long.parseLong(vendResponse.getLasseq());
@@ -124,10 +132,7 @@ public class VtuMtnVendListener implements MessageListener {
 			if(vendResponse.getStatusId() != null){
 				vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
 			}
-			log.info("vendStatusCode : "+vendStatusCode);
 		}
-		
-		log.info("vendResponse : "+vendResponse);
 		
 		TopupHistory topupHistory = transactionLog.getTopupHistory(); 
 		
@@ -135,9 +140,33 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		setVendResponse(vendResponse, transactionLog);
 		
+		CurrentCycleInfo currentCycleInfo = null;
+		
 		if(vendStatusCode != null && VtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
 			transactionLog.setVtuStatus(Status.SUCCESSFUL);
 			topupHistory.setStatus(Status.SUCCESSFUL);
+			
+			TopUpProfile topUpProfile = transactionLog.getTopUpProfile();
+			
+			currentCycleInfo = vtuQueryService.getCurrentCycleInfo(topUpProfile.getPk(), topUpProfile.getMsisdn());
+			
+			currentCycleInfo.setDateModified(new Timestamp(System.currentTimeMillis())); 
+			
+			
+			BigDecimal amount = topupHistory.getAmount();
+			
+			BigDecimal currentCummulativeAmount = currentCycleInfo.getCurrentCummulativeAmount(); 
+			
+			BigDecimal newCummulativeAmount = currentCummulativeAmount.add(amount);
+			
+			BigDecimal topupLimit = topUpProfile.getTopupLimit();
+			
+			BigDecimal newMaxAmountLeft = topupLimit.subtract(newCummulativeAmount);
+			
+			currentCycleInfo.setCurrentCummulativeAmount(newCummulativeAmount);
+			currentCycleInfo.setMaxAmountLeft(newMaxAmountLeft);
+			currentCycleInfo.setLastKnownTopupAmount(amount);
+			
 		} else {
 			transactionLog.setVtuStatus(Status.FAILED);
 			topupHistory.setStatus(Status.FAILED);
@@ -150,6 +179,10 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		vtuQueryService.update(transactionLog);
 		vtuQueryService.update(topupHistory);
+		
+		if(currentCycleInfo != null){
+			vtuQueryService.update(currentCycleInfo);
+		}
 		
 		currentSequence++;
 		
@@ -191,38 +224,6 @@ public class VtuMtnVendListener implements MessageListener {
 	 * @return
 	 */
 	private VendResponse sendVendRequest(Vend vend) {
-		
-//		log.warn("XXXXXXXXXXXXXXXXXXXX TEST VEND RESPONSE IN USE XXXXXXXXXXXXXXXXXXXX");
-//		
-//		VendResponse response = new VendResponse();
-//		
-//		response.setDestBalance("100");
-//		response.setDestMsisdn("080236438383");
-//		
-//		int testCase = Integer.parseInt(vend.getSequence()) % 4 ;
-//		
-//		switch (testCase) {
-//		
-//		case 0:
-//			response.setStatusId(VtuVendStatusCode.SUCCESSFUL.getResponseCode());
-//			break;
-//		case 1:
-//			String lasseq = String.valueOf(currentSequence + (int)(Math.random() * 10 + 1));
-//			response.setLasseq(lasseq);
-//			response.setStatusId(VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.getResponseCode());
-//			break;
-//		case 2:
-//			response.setStatusId(VtuVendStatusCode.INVALID_DESTINATION_MSISDN.getResponseCode());
-//			break;
-//		case 3:
-//			response.setStatusId(VtuVendStatusCode.MSISDN_BARRED.getResponseCode());
-//			break;
-//		default:
-//			break;
-//		}
-//		
-//		return response;
-		
 		HostIFServicePortType hostIFServicePortType = soapService.getHostIFServicePortType();
 		return hostIFServicePortType.vend(vend);
 	}

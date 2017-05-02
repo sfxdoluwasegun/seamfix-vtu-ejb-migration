@@ -43,7 +43,7 @@ public class VtuMtnSoapService {
 		log.info(getClass().getName() + " init called, useWsdlFile : "+useWsdlFile);
 		
 		if(useWsdlFile != null && useWsdlFile.trim().equalsIgnoreCase("true")){
-			hostIFService = new HostIFService(HostIFService.class.getResource("HostIFService.wsdl"));
+			hostIFService = new HostIFService(getClass().getClassLoader().getResource("soapresources/HostIFService.wsdl"));
 		} else {
 
 			String wsdlUrl;
@@ -60,7 +60,7 @@ public class VtuMtnSoapService {
 				}
 				
 			} else {
-				hostIFService = new HostIFService(HostIFService.class.getResource("HostIFService.wsdl"));
+				hostIFService = new HostIFService(getClass().getClassLoader().getResource("soapresources/HostIFService.wsdl"));
 			}
 		}
 		
