@@ -16,8 +16,8 @@ public enum VtuMtnSetting {
     VTU_MINIMUM_TRANSFER_AMOUNT("50", "Minimum amount that can be transfered"),
     VTU_CURRENT_SEQUENCE_NUMBER("1", "Current VTU sequence number"),
     VTU_VEND_SERVICE_URL("1", "url for the vend operation"),
-    VTU_VEND_USERNAME("", "vend username"),
-    VTU_VEND_PASSWORD("", "vend password"),
+    VTU_VEND_USERNAME("Uve1RBlifQ2cdN6n5VOAHA==", "vend username"),
+    VTU_VEND_PASSWORD("yy+c5vgxg1PZesNOTzp6ww==", "vend password"),
     
     ;
 
