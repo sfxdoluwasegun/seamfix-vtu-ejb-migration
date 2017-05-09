@@ -3,8 +3,6 @@
  */
 package com.sf.vas.mtnvtu.service;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -30,6 +28,7 @@ import com.sf.vas.utils.exception.VasRuntimeException;
 @Singleton
 public class VtuMtnSoapService {
 
+	@SuppressWarnings("unused")
 	private Logger log = Logger.getLogger(getClass());
 	
 	@Inject
@@ -44,35 +43,10 @@ public class VtuMtnSoapService {
 	
 	@PostConstruct
 	private void init() {
-		
-		String useWsdlFile = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_USE_EMBEDDED_WSDL_FILE);
-		
-		log.info(getClass().getName() + " init called, useWsdlFile : "+useWsdlFile);
-		
-		if(useWsdlFile != null && useWsdlFile.trim().equalsIgnoreCase("true")){
-			hostIFService = new HostIFService(getClass().getClassLoader().getResource("soapresources/HostIFService.wsdl"));
-		} else {
 
-			String wsdlUrl;
-			
-			wsdlUrl = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_WSDL_FILE_URL);
-			
-			log.info("wsdlUrl : "+wsdlUrl);
-			
-			if(wsdlUrl != null){
-				try {
-					hostIFService = new HostIFService(new URL(wsdlUrl));
-				} catch (MalformedURLException e) {
-					throw new VasRuntimeException("Invalid setting WSDL URL", e);
-				}
-				
-			} else {
-				hostIFService = new HostIFService(getClass().getClassLoader().getResource("soapresources/HostIFService.wsdl"));
-			}
-		}
+		hostIFService = new HostIFService(getClass().getClassLoader().getResource("soapresources/HostIFService.wsdl"));
 		
 		hostIFServicePortType = hostIFService.getHostIFServiceSOAP11PortHttp();
-		
 		
 		String sUsername = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_VEND_USERNAME);
 		String sPassword = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_VEND_PASSWORD);
@@ -90,12 +64,15 @@ public class VtuMtnSoapService {
 			throw new VasRuntimeException("error decrypting configured vend user name or password", e);
 		}
 		
+		String endpointUrl = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_SERVICE_URL);
+		
 		BindingProvider bindingProvider = (BindingProvider) hostIFServicePortType;
 		
 		Map<String, Object> requestContext = bindingProvider.getRequestContext();
 		
 		requestContext.put(BindingProvider.USERNAME_PROPERTY, username);
 		requestContext.put(BindingProvider.PASSWORD_PROPERTY, password);
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointUrl);
 	
 	}
 
