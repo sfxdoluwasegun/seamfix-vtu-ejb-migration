@@ -148,24 +148,29 @@ public class VtuMtnVendListener implements MessageListener {
 			
 			TopUpProfile topUpProfile = transactionLog.getTopUpProfile();
 			
-			currentCycleInfo = vtuQueryService.getCurrentCycleInfo(topUpProfile.getPk(), topUpProfile.getMsisdn());
+			if(topUpProfile != null){
 			
-			currentCycleInfo.setDateModified(new Timestamp(System.currentTimeMillis())); 
-			
-			
-			BigDecimal amount = topupHistory.getAmount();
-			
-			BigDecimal currentCummulativeAmount = currentCycleInfo.getCurrentCummulativeAmount(); 
-			
-			BigDecimal newCummulativeAmount = currentCummulativeAmount.add(amount);
-			
-			BigDecimal topupLimit = topUpProfile.getTopupLimit();
-			
-			BigDecimal newMaxAmountLeft = topupLimit.subtract(newCummulativeAmount);
-			
-			currentCycleInfo.setCurrentCummulativeAmount(newCummulativeAmount);
-			currentCycleInfo.setMaxAmountLeft(newMaxAmountLeft);
-			currentCycleInfo.setLastKnownTopupAmount(amount);
+				currentCycleInfo = vtuQueryService.getCurrentCycleInfo(topUpProfile.getPk(), topUpProfile.getMsisdn());
+				
+				currentCycleInfo.setDateModified(new Timestamp(System.currentTimeMillis())); 
+				
+				
+				BigDecimal amount = topupHistory.getAmount();
+				
+				BigDecimal currentCummulativeAmount = currentCycleInfo.getCurrentCummulativeAmount(); 
+				
+				BigDecimal newCummulativeAmount = currentCummulativeAmount.add(amount);
+				
+				BigDecimal topupLimit = topUpProfile.getTopupLimit();
+				
+				BigDecimal newMaxAmountLeft = topupLimit.subtract(newCummulativeAmount);
+				
+				currentCycleInfo.setCurrentCummulativeAmount(newCummulativeAmount);
+				currentCycleInfo.setMaxAmountLeft(newMaxAmountLeft);
+				currentCycleInfo.setLastKnownTopupAmount(amount);
+			} else {
+//				this would be the case in an instant top up scenario and it is not subject to any top up limit restriction
+			}
 			
 		} else {
 			transactionLog.setVtuStatus(Status.FAILED);
