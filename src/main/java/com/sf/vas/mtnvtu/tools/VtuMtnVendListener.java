@@ -8,7 +8,6 @@ import java.sql.Timestamp;
 import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.AsyncResult;
 import javax.ejb.Asynchronous;
@@ -55,21 +54,21 @@ public class VtuMtnVendListener implements MessageListener {
 	
 	private long currentSequence = 0L;
 	
+	private Settings vtuCurrentSeqNoSettings;
+	
 	@PostConstruct
 	private void init(){
 		try {
 			currentSequence = Long.parseLong(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER));
+			vtuCurrentSeqNoSettings = vtuQueryService.getSettingsByName(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER.name());
 		} catch (NumberFormatException e) {
 			log.error("Error parsing CURRENT_SEQUENCE_NUMBER setting value. Using default value : "+currentSequence);
 		}
 	}
 	
-	@PreDestroy
-	private void wrapUp(){
-		log.info("VtuVendListener wrapUp called !!");
-		Settings settings = vtuQueryService.getSettingsByName(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER.name());
-		settings.setValue(String.valueOf(currentSequence)); 
-		vtuQueryService.update(settings);
+	private void updateSequenceNumberSetting(){
+		vtuCurrentSeqNoSettings.setValue(String.valueOf(currentSequence)); 
+		vtuQueryService.update(vtuCurrentSeqNoSettings);
 	}
 	
 	@Override
@@ -190,6 +189,7 @@ public class VtuMtnVendListener implements MessageListener {
 		}
 		
 		currentSequence++;
+		updateSequenceNumberSetting();
 		
 		if(transactionLog.getCallBackUrl() != null && !transactionLog.getCallBackUrl().trim().isEmpty()){
 			doCallBack(transactionLog);
