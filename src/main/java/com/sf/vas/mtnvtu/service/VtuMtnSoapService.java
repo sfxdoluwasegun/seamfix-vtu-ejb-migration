@@ -28,7 +28,6 @@ import com.sf.vas.utils.exception.VasRuntimeException;
 @Singleton
 public class VtuMtnSoapService {
 
-	@SuppressWarnings("unused")
 	private Logger log = Logger.getLogger(getClass());
 	
 	@Inject
@@ -73,6 +72,22 @@ public class VtuMtnSoapService {
 		requestContext.put(BindingProvider.USERNAME_PROPERTY, username);
 		requestContext.put(BindingProvider.PASSWORD_PROPERTY, password);
 		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointUrl);
+		
+		String sslTrustStorePath = vtuQueryService.getSettingValue(VtuMtnSetting.SSL_TRUST_STORE_FILE_PATH);
+		String sslTrustStorePasswordEnc = vtuQueryService.getSettingValue(VtuMtnSetting.SSL_TRUST_STORE_PASSWORD);
+		
+		String sslTrustStorePassword = "";
+		
+		try {
+			sslTrustStorePassword = encryptionUtil.decrypt(sslTrustStorePasswordEnc);
+		} catch (VasException e) {
+//			if decryption fails still proceed. We might be using HTTP and not need this anyway
+			log.error("Error decrypting ssl trust password : "+sslTrustStorePassword, e);
+		}
+		
+//		sets the trust ssl certificate path and password
+		System.setProperty("javax.net.ssl.trustStore", sslTrustStorePath);
+		System.setProperty("javax.net.ssl.trustStorePassword", sslTrustStorePassword);
 	
 	}
 

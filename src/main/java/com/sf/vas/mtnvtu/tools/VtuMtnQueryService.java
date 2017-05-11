@@ -3,6 +3,8 @@
  */
 package com.sf.vas.mtnvtu.tools;
 
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -14,7 +16,10 @@ import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo_;
 import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.TopUpProfile_;
+import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.entities.VtuTransactionLog_;
 import com.sf.vas.atjpa.enums.SettingsType;
+import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.parent.JEntity;
 import com.sf.vas.atjpa.tools.QueryService;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
@@ -109,5 +114,21 @@ public class VtuMtnQueryService extends QueryService {
 				));
 
 		return getSafeSingleResult(criteriaQuery);
+	}
+
+	/**
+	 * @return
+	 */
+	public List<VtuTransactionLog> getFailedTransactionLogs() {
+		CriteriaQuery<VtuTransactionLog> criteriaQuery = criteriaBuilder.createQuery(VtuTransactionLog.class);
+		Root<VtuTransactionLog> root = criteriaQuery.from(VtuTransactionLog.class);
+		
+		criteriaQuery.select(root);
+		criteriaQuery.where(criteriaBuilder.and(
+				criteriaBuilder.equal(root.get(VtuTransactionLog_.vtuStatus), Status.FAILED),
+				criteriaBuilder.equal(root.get(VtuTransactionLog_.deleted), false)
+				));
+		
+		return entityManager.createQuery(criteriaQuery).getResultList();
 	}
 }

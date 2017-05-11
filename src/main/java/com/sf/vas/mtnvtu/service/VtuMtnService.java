@@ -4,6 +4,7 @@
 package com.sf.vas.mtnvtu.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -22,6 +23,7 @@ import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
 import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
 import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
+import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferRequest;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
@@ -194,4 +196,35 @@ public class VtuMtnService {
 		
 		return response;
 	}
+	
+	public void retriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
+		
+		if(vtuTransactionLog == null || !Status.FAILED.equals(vtuTransactionLog.getVtuStatus())){
+//			only failed vtu transactions should be re triggered
+			return;
+		}
+		
+		try {
+			jmsManager.sendVtuRequest(vtuTransactionLog);
+		} catch (JMSException e) {
+			throw new VasException(e);
+		}
+	}
+	
+	public void retriggerFailedVendTransactions() {
+		List<VtuTransactionLog> failedTransactionLogs = vtuQueryService.getFailedTransactionLogs();
+		
+		if(failedTransactionLogs == null || failedTransactionLogs.isEmpty()){
+			return;
+		}
+
+		for(VtuTransactionLog vtuTransactionLog : failedTransactionLogs){
+			try {
+				retriggerSingleFailedTransaction(vtuTransactionLog);
+			} catch (VasException e) {
+				log.error("Error retrigger log with pk : "+vtuTransactionLog.getPk(), e);
+			} 
+		}
+	}
+	
 }
