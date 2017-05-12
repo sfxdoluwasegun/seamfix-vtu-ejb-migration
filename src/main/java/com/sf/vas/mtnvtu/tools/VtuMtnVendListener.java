@@ -27,6 +27,7 @@ import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
+import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.mtnvtu.service.VtuMtnSoapService;
 import com.sf.vas.mtnvtu.soapartifacts.HostIFServicePortType;
 import com.sf.vas.mtnvtu.soapartifacts.Vend;
@@ -49,6 +50,9 @@ public class VtuMtnVendListener implements MessageListener {
 	
 	@Inject
 	VtuMtnQueryService vtuQueryService;
+	
+	@Inject
+	VtuMtnService vtuMtnService;
 	
 	private Logger log = Logger.getLogger(getClass());
 	
@@ -138,6 +142,7 @@ public class VtuMtnVendListener implements MessageListener {
 		transactionLog.setSequence(currentSequence);
 		
 		setVendResponse(vendResponse, transactionLog);
+		vtuQueryService.update(transactionLog);
 		
 		CurrentCycleInfo currentCycleInfo = null;
 		
@@ -149,7 +154,7 @@ public class VtuMtnVendListener implements MessageListener {
 			
 			if(topUpProfile != null){
 			
-				currentCycleInfo = vtuQueryService.getCurrentCycleInfo(topUpProfile.getPk(), topUpProfile.getMsisdn());
+				currentCycleInfo = vtuMtnService.getCycleInfoCreateIfNotExist(topUpProfile);
 				
 				currentCycleInfo.setDateModified(new Timestamp(System.currentTimeMillis())); 
 				
@@ -181,7 +186,6 @@ public class VtuMtnVendListener implements MessageListener {
 			}
 		}
 		
-		vtuQueryService.update(transactionLog);
 		vtuQueryService.update(topupHistory);
 		
 		if(currentCycleInfo != null){

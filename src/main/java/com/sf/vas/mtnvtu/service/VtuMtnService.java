@@ -4,6 +4,7 @@
 package com.sf.vas.mtnvtu.service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.ejb.Stateless;
@@ -12,6 +13,7 @@ import javax.jms.JMSException;
 
 import org.jboss.logging.Logger;
 
+import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.NetworkCarrier;
 import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
@@ -199,10 +201,16 @@ public class VtuMtnService {
 	
 	public void retriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
+		if(vtuTransactionLog != null){
+			log.info("vtuTransactionLog pk : "+vtuTransactionLog.getPk()+", status : "+vtuTransactionLog.getVtuStatus());
+		}
+		
 		if(vtuTransactionLog == null || !Status.FAILED.equals(vtuTransactionLog.getVtuStatus())){
+			log.info("it is not a failed transaction so we skip it !!!");
 //			only failed vtu transactions should be re triggered
 			return;
 		}
+		log.info("retriggerSingleFailedTransaction called for "+vtuTransactionLog.getPk());
 		
 		try {
 			jmsManager.sendVtuRequest(vtuTransactionLog);
@@ -226,5 +234,39 @@ public class VtuMtnService {
 			} 
 		}
 	}
+	
+	/**
+	 * @param profile
+	 * @return
+	 */
+	private CurrentCycleInfo getNewCycleInfo(TopUpProfile profile) {
+
+		CurrentCycleInfo cycleInfo = new CurrentCycleInfo();
+		
+		cycleInfo.setCurrentCummulativeAmount(BigDecimal.ZERO);
+		cycleInfo.setDateModified(new Timestamp(System.currentTimeMillis()));
+		cycleInfo.setDeleted(profile.isDeleted());
+		cycleInfo.setLastKnownCycle(profile.getTopupcycle());
+		cycleInfo.setLastKnownTopupAmount(profile.getTopUpAmount());
+		cycleInfo.setMaxAmountLeft(profile.getTopupLimit());
+		cycleInfo.setMsisdn(profile.getMsisdn());
+		cycleInfo.setTopUpProfile(profile); 
+		
+		vtuQueryService.create(cycleInfo);
+		
+		return cycleInfo;
+	}
+	
+	public CurrentCycleInfo getCycleInfoCreateIfNotExist(TopUpProfile profile) {
+		
+		CurrentCycleInfo cycleInfo = vtuQueryService.getCurrentCycleInfo(profile.getPk(), profile.getMsisdn());
+		
+		if(cycleInfo != null){
+			return cycleInfo;
+		}
+		
+		return getNewCycleInfo(profile);
+	}
+	
 	
 }
