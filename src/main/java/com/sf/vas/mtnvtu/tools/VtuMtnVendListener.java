@@ -127,7 +127,20 @@ public class VtuMtnVendListener implements MessageListener {
 		
 //		ideally this should only happen once
 		while(vendStatusCode != null && VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.equals(vendStatusCode)){
-			currentSequence = Long.parseLong(vendResponse.getLasseq());
+			
+//			this check was done because it was noticed that for sequence number check failed responses, MTN Vend system may not send the 
+//			last valid sequence number as indicated in their API document. In that case, we just increment the currentSequence number and retry
+			if(vendResponse.getLasseq() != null){
+//				Added another try catch block just in case they send a non numeric value too
+				try {
+					currentSequence = Long.parseLong(vendResponse.getLasseq().trim());
+				} catch (NumberFormatException e) {
+					log.error("invalid lasseq number sent from MTN Vend Service. lasseq : "+vendResponse.getLasseq());
+				}
+			} else {
+				log.error("invalid lasseq number sent from MTN Vend Service. lasseq is null");
+			}
+			
 			currentSequence++;
 			vend.setSequence(String.valueOf(currentSequence));
 			vendResponse = sendVendRequest(vend);
