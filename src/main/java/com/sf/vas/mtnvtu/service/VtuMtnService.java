@@ -4,6 +4,8 @@
 package com.sf.vas.mtnvtu.service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -11,6 +13,7 @@ import javax.jms.JMSException;
 
 import org.jboss.logging.Logger;
 
+import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.NetworkCarrier;
 import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
@@ -22,6 +25,7 @@ import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
 import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
 import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
+import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferRequest;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
@@ -194,4 +198,75 @@ public class VtuMtnService {
 		
 		return response;
 	}
+	
+	public void retriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
+		
+		if(vtuTransactionLog != null){
+			log.info("vtuTransactionLog pk : "+vtuTransactionLog.getPk()+", status : "+vtuTransactionLog.getVtuStatus());
+		}
+		
+		if(vtuTransactionLog == null || !Status.FAILED.equals(vtuTransactionLog.getVtuStatus())){
+			log.info("it is not a failed transaction so we skip it !!!");
+//			only failed vtu transactions should be re triggered
+			return;
+		}
+		log.info("retriggerSingleFailedTransaction called for "+vtuTransactionLog.getPk());
+		
+		try {
+			jmsManager.sendVtuRequest(vtuTransactionLog);
+		} catch (JMSException e) {
+			throw new VasException(e);
+		}
+	}
+	
+	public void retriggerFailedVendTransactions() {
+		List<VtuTransactionLog> failedTransactionLogs = vtuQueryService.getFailedTransactionLogs();
+		
+		if(failedTransactionLogs == null || failedTransactionLogs.isEmpty()){
+			return;
+		}
+
+		for(VtuTransactionLog vtuTransactionLog : failedTransactionLogs){
+			try {
+				retriggerSingleFailedTransaction(vtuTransactionLog);
+			} catch (VasException e) {
+				log.error("Error retrigger log with pk : "+vtuTransactionLog.getPk(), e);
+			} 
+		}
+	}
+	
+	/**
+	 * @param profile
+	 * @return
+	 */
+	private CurrentCycleInfo getNewCycleInfo(TopUpProfile profile) {
+
+		CurrentCycleInfo cycleInfo = new CurrentCycleInfo();
+		
+		cycleInfo.setCurrentCummulativeAmount(BigDecimal.ZERO);
+		cycleInfo.setDateModified(new Timestamp(System.currentTimeMillis()));
+		cycleInfo.setDeleted(profile.isDeleted());
+		cycleInfo.setLastKnownCycle(profile.getTopupcycle());
+		cycleInfo.setLastKnownTopupAmount(profile.getTopUpAmount());
+		cycleInfo.setMaxAmountLeft(profile.getTopupLimit());
+		cycleInfo.setMsisdn(profile.getMsisdn());
+		cycleInfo.setTopUpProfile(profile); 
+		
+		vtuQueryService.create(cycleInfo);
+		
+		return cycleInfo;
+	}
+	
+	public CurrentCycleInfo getCycleInfoCreateIfNotExist(TopUpProfile profile) {
+		
+		CurrentCycleInfo cycleInfo = vtuQueryService.getCurrentCycleInfo(profile.getPk(), profile.getMsisdn());
+		
+		if(cycleInfo != null){
+			return cycleInfo;
+		}
+		
+		return getNewCycleInfo(profile);
+	}
+	
+	
 }
