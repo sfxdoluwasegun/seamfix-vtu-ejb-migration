@@ -160,6 +160,10 @@ public class VtuMtnVendListener implements MessageListener {
 		transactionLog.setSequence(currentSequence);
 		
 		setVendResponse(vendResponse, transactionLog);
+		
+		log.info("vendResponse : "+vendResponse);
+		log.info("vend : "+vend);
+		
 //		we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
 		vtuQueryService.update(transactionLog);
 		
