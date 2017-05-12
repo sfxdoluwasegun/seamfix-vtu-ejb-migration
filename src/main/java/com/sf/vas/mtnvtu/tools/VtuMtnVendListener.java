@@ -109,6 +109,11 @@ public class VtuMtnVendListener implements MessageListener {
 	 */
 	private void handleVtuRequestMessage(VtuTransactionLog transactionLog) {
 		
+		if(Status.SUCCESSFUL.equals(transactionLog.getVtuStatus())){
+			log.info("skipping successful vtu transaction log with pk : "+transactionLog.getPk());
+			return;
+		}
+		
 		Vend vend = new Vend();
 		
 		vend.setAmount(transactionLog.getAmount().toPlainString());
@@ -155,6 +160,7 @@ public class VtuMtnVendListener implements MessageListener {
 		transactionLog.setSequence(currentSequence);
 		
 		setVendResponse(vendResponse, transactionLog);
+//		we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
 		vtuQueryService.update(transactionLog);
 		
 		CurrentCycleInfo currentCycleInfo = null;
@@ -162,6 +168,7 @@ public class VtuMtnVendListener implements MessageListener {
 		if(vendStatusCode != null && VtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
 			transactionLog.setVtuStatus(Status.SUCCESSFUL);
 			topupHistory.setStatus(Status.SUCCESSFUL);
+			topupHistory.setFailureReason(null);
 			
 			TopUpProfile topUpProfile = transactionLog.getTopUpProfile();
 			
@@ -199,6 +206,7 @@ public class VtuMtnVendListener implements MessageListener {
 			}
 		}
 		
+		vtuQueryService.update(transactionLog);
 		vtuQueryService.update(topupHistory);
 		
 		if(currentCycleInfo != null){

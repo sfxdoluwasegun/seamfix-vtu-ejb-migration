@@ -8,6 +8,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.jms.JMSException;
 
@@ -201,16 +203,20 @@ public class VtuMtnService {
 	
 	public void retriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
-		if(vtuTransactionLog != null){
-			log.info("vtuTransactionLog pk : "+vtuTransactionLog.getPk()+", status : "+vtuTransactionLog.getVtuStatus());
-		}
-		
 		if(vtuTransactionLog == null || !Status.FAILED.equals(vtuTransactionLog.getVtuStatus())){
-			log.info("it is not a failed transaction so we skip it !!!");
 //			only failed vtu transactions should be re triggered
 			return;
 		}
-		log.info("retriggerSingleFailedTransaction called for "+vtuTransactionLog.getPk());
+		
+		doRetriggerSingleFailedTransaction(vtuTransactionLog); 
+	}
+	
+//	Did this to avoid a transaction log being queued multiple times
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
+		
+		vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
+		vtuQueryService.update(vtuTransactionLog);
 		
 		try {
 			jmsManager.sendVtuRequest(vtuTransactionLog);
