@@ -51,12 +51,6 @@ public class VtuMtnService {
 	
 	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequest request){
 		
-//		AirtimeTransferResponse errorResponse = validateRequest(request);
-//		
-//		if(errorResponse != null){
-//			return errorResponse;
-//		}
-		
 		AirtimeTransferResponse response = new AirtimeTransferResponse();
 		
 		Subscriber subscriber = vtuQueryService.getByPk(Subscriber.class, request.getUserId());
