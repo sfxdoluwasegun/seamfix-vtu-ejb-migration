@@ -124,7 +124,7 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		Vend vend = new Vend();
 		
-		vend.setAmount(transactionLog.getAmount().toPlainString());
+		vend.setAmount(String.valueOf(transactionLog.getAmount().intValue()));
 		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
 		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
 		vend.setSequence(String.valueOf(currentSequence)); 
