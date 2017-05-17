@@ -114,16 +114,18 @@ public class VtuMtnVendListener implements MessageListener {
 			return;
 		}
 		
+//		added this for an error scenario where an msisdn with a + sign was previously sent
 		String destinationMsisdn = transactionLog.getDestinationMsisdn();
 		
 		if(destinationMsisdn.startsWith("+")){
 			destinationMsisdn = destinationMsisdn.substring(1);
+			transactionLog.setDestinationMsisdn(destinationMsisdn); // we need to update the vtu log and remove the plus sign if it present
 		}
 		
 		Vend vend = new Vend();
 		
 		vend.setAmount(transactionLog.getAmount().toPlainString());
-		vend.setDestMsisdn(destinationMsisdn);
+		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
 		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
 		vend.setSequence(String.valueOf(currentSequence)); 
 		vend.setTariffTypeId(transactionLog.getTariffTypeId());
@@ -138,6 +140,8 @@ public class VtuMtnVendListener implements MessageListener {
 		
 //		ideally this should only happen once
 		while(vendStatusCode != null && VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.equals(vendStatusCode)){
+			
+			log.info("sequence number check failed vendResponse : "+vendResponse);
 			
 //			this check was done because it was noticed that for sequence number check failed responses, MTN Vend system may not send the 
 //			last valid sequence number as indicated in their API document. In that case, we just increment the currentSequence number and retry
@@ -176,6 +180,10 @@ public class VtuMtnVendListener implements MessageListener {
 		CurrentCycleInfo currentCycleInfo = null;
 		
 		if(vendStatusCode != null && VtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
+			
+//			this should only be updated for successful transaction
+			currentSequence++;
+			
 			transactionLog.setVtuStatus(Status.SUCCESSFUL);
 			topupHistory.setStatus(Status.SUCCESSFUL);
 			topupHistory.setFailureReason(null);
@@ -223,7 +231,6 @@ public class VtuMtnVendListener implements MessageListener {
 			vtuQueryService.update(currentCycleInfo);
 		}
 		
-		currentSequence++;
 		updateSequenceNumberSetting();
 		
 		if(transactionLog.getCallBackUrl() != null && !transactionLog.getCallBackUrl().trim().isEmpty()){

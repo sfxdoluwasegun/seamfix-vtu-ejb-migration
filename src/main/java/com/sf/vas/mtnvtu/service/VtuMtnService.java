@@ -209,7 +209,11 @@ public class VtuMtnService {
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
+		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
+		
 		vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
+		vtuTransactionLog.setOriginatorMsisdn(originMsisdn); // we need to always use the updated originator msisdn
+		
 		vtuQueryService.update(vtuTransactionLog);
 		
 		try {
