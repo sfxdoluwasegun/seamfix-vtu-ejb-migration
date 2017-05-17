@@ -114,10 +114,16 @@ public class VtuMtnVendListener implements MessageListener {
 			return;
 		}
 		
+		String destinationMsisdn = transactionLog.getDestinationMsisdn();
+		
+		if(destinationMsisdn.startsWith("+")){
+			destinationMsisdn = destinationMsisdn.substring(1);
+		}
+		
 		Vend vend = new Vend();
 		
 		vend.setAmount(transactionLog.getAmount().toPlainString());
-		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
+		vend.setDestMsisdn(destinationMsisdn);
 		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
 		vend.setSequence(String.valueOf(currentSequence)); 
 		vend.setTariffTypeId(transactionLog.getTariffTypeId());
@@ -161,8 +167,8 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		setVendResponse(vendResponse, transactionLog);
 		
-		log.info("vendResponse : "+vendResponse);
 		log.info("vend : "+vend);
+		log.info("vendResponse : "+vendResponse);
 		
 //		we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
 		vtuQueryService.update(transactionLog);

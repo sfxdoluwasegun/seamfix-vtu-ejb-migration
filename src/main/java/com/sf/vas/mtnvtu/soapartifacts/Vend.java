@@ -7,6 +7,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import lombok.ToString;
+
 
 /**
  * <p>Java class for anonymous complex type.
@@ -40,6 +42,7 @@ import javax.xml.bind.annotation.XmlType;
     "tariffTypeId"
 })
 @XmlRootElement(name = "vend")
+@ToString
 public class Vend {
 
     @XmlElement(required = true, nillable = true)
