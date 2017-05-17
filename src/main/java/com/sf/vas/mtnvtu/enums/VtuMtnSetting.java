@@ -9,8 +9,8 @@ package com.sf.vas.mtnvtu.enums;
  */
 public enum VtuMtnSetting {
 
-    VTU_ORIGINATOR_MSISDN("2348064616904", "Airtime Pool Msisdn"),
-    VTU_SERVICE_URL("http://41.220.77.137:80/axis2/services/HostIFService", "This is the URL to the VTU service"),
+    VTU_ORIGINATOR_MSISDN("2348068735763", "Airtime Pool Msisdn"),
+    VTU_SERVICE_URL("http://41.206.4.75:8083/axis2/services/HostIFService", "This is the URL to the VTU service"),
     VTU_SERVICE_PROVIDER_ID("1", "VTU service provided id"),
     VTU_MINIMUM_TRANSFER_AMOUNT("50", "Minimum amount that can be transfered"),
     VTU_CURRENT_SEQUENCE_NUMBER("1", "Current VTU sequence number"),
