@@ -17,7 +17,8 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.Settings;
@@ -54,7 +55,7 @@ public class VtuMtnVendListener implements MessageListener {
 	@Inject
 	VtuMtnService vtuMtnService;
 	
-	private Logger log = Logger.getLogger(getClass());
+	private Logger log = LoggerFactory.getLogger(getClass());
 	
 	private long currentSequence = 0L;
 	

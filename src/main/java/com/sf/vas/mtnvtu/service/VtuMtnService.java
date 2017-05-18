@@ -13,7 +13,8 @@ import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.jms.JMSException;
 
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.NetworkCarrier;
@@ -47,7 +48,7 @@ public class VtuMtnService {
 	@Inject
 	VtuMtnJmsManager jmsManager;
 	
-	Logger log = Logger.getLogger(getClass());
+	private Logger log = LoggerFactory.getLogger(getClass());
 	
 	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequest request){
 		
