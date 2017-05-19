@@ -95,6 +95,7 @@ public class VtuMtnVendListener implements MessageListener {
 					
 					topupHistory.setStatus(Status.FAILED);
 					topupHistory.setFailureReason("VTU VEND ERROR");
+					topupHistory.setDisplayFailureReason("Oops! An error occured while trying to credit your account. Kindly contact support");
 					
 					vtuQueryService.update(vtuTransactionLog);
 					vtuQueryService.update(topupHistory);
@@ -188,6 +189,7 @@ public class VtuMtnVendListener implements MessageListener {
 			transactionLog.setVtuStatus(Status.SUCCESSFUL);
 			topupHistory.setStatus(Status.SUCCESSFUL);
 			topupHistory.setFailureReason(null);
+			topupHistory.setDisplayFailureReason(null);
 			
 			TopUpProfile topUpProfile = transactionLog.getTopUpProfile();
 			
@@ -223,6 +225,7 @@ public class VtuMtnVendListener implements MessageListener {
 			} else {
 				topupHistory.setFailureReason("VTU VEND ERROR");
 			}
+			topupHistory.setDisplayFailureReason("Oops! server error, we are unable to credit you at the moment. Kindly contact support");
 		}
 		
 		vtuQueryService.update(transactionLog);
