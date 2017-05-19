@@ -10,7 +10,8 @@ import javax.ejb.Singleton;
 import javax.inject.Inject;
 import javax.xml.ws.BindingProvider;
 
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.soapartifacts.HostIFService;
@@ -28,7 +29,8 @@ import com.sf.vas.utils.exception.VasRuntimeException;
 @Singleton
 public class VtuMtnSoapService {
 
-	private Logger log = Logger.getLogger(getClass());
+	@SuppressWarnings("unused")
+	private Logger log = LoggerFactory.getLogger(getClass());
 	
 	@Inject
 	private VtuMtnQueryService vtuQueryService;
