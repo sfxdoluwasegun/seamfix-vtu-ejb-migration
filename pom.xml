@@ -24,7 +24,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>vas-utils</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
 			<groupId>org.projectlombok</groupId>
@@ -49,8 +49,19 @@
 	        <version>1.7.7</version>
             <scope>provided</scope>
 	    </dependency>
-        
     </dependencies>
+	<distributionManagement>
+		<repository>
+			<id>deployment</id>
+			<name>Internal Releases</name>
+			<url>http://singlewindow.seamfix.com:7997/nexus/content/repositories/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>deployment</id>
+			<name>Internal Releases</name>
+			<url>http://singlewindow.seamfix.com:7997/nexus/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
     <build>
         <plugins>
