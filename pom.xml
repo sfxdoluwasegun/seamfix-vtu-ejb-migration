@@ -24,7 +24,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>vas-utils</artifactId>
-			<version>0.0.2-SNAPSHOT</version>
+			<version>0.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
 			<groupId>org.projectlombok</groupId>
@@ -49,6 +49,11 @@
 	        <version>1.7.7</version>
             <scope>provided</scope>
 	    </dependency>
+        <dependency>
+			<groupId>com.sf.vas</groupId>
+			<artifactId>mtn-sms</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 	<distributionManagement>
 		<repository>

@@ -26,8 +26,10 @@ import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.mtnvtu.enums.SmsProps;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
+import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
 import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.mtnvtu.service.VtuMtnSoapService;
 import com.sf.vas.mtnvtu.soapartifacts.HostIFServicePortType;
@@ -55,6 +57,9 @@ public class VtuMtnVendListener implements MessageListener {
 	@Inject
 	VtuMtnService vtuMtnService;
 	
+	@Inject
+	VtuMtnAsyncService asyncService;
+	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
 	private long currentSequence = 0L;
@@ -70,7 +75,7 @@ public class VtuMtnVendListener implements MessageListener {
 			log.error("Error parsing CURRENT_SEQUENCE_NUMBER setting value. Using default value : "+currentSequence);
 		}
 	}
-	
+
 	private void updateSequenceNumberSetting(){
 		vtuCurrentSeqNoSettings.setValue(String.valueOf(currentSequence)); 
 		vtuQueryService.update(vtuCurrentSeqNoSettings);
@@ -182,6 +187,8 @@ public class VtuMtnVendListener implements MessageListener {
 		CurrentCycleInfo currentCycleInfo = null;
 		
 		if(vendStatusCode != null && VtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
+			
+			asyncService.sendSms(SmsProps.CREDIT_SUCCESSFUL, transactionLog.getDestinationMsisdn(), "amount", vend.getAmount());
 			
 //			this should only be updated for successful transaction
 			currentSequence++;
