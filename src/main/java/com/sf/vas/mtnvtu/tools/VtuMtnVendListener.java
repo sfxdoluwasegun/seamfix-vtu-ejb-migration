@@ -188,7 +188,12 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(vendStatusCode != null && VtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
 			
-			asyncService.sendSms(SmsProps.CREDIT_SUCCESSFUL, transactionLog.getDestinationMsisdn(), "amount", vend.getAmount());
+			try {
+//				invoked asynchronously but just in case
+				asyncService.sendSms(SmsProps.CREDIT_SUCCESSFUL, transactionLog.getDestinationMsisdn(), "amount", vend.getAmount());
+			} catch (Exception e) {
+				log.error("Error sending sms", e);
+			}
 			
 //			this should only be updated for successful transaction
 			currentSequence++;
