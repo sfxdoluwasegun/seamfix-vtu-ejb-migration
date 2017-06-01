@@ -26,7 +26,6 @@ import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.mtnvtu.enums.SmsProps;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
@@ -104,6 +103,13 @@ public class VtuMtnVendListener implements MessageListener {
 					
 					vtuQueryService.update(vtuTransactionLog);
 					vtuQueryService.update(topupHistory);
+					
+					try {
+//						invoked asynchronously but just in case
+						asyncService.sendFailedAirtimeTransferSms(vtuTransactionLog);
+					} catch (Exception ex) {
+						log.error("Error sending sms", ex);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -190,7 +196,7 @@ public class VtuMtnVendListener implements MessageListener {
 			
 			try {
 //				invoked asynchronously but just in case
-				asyncService.sendSms(SmsProps.CREDIT_SUCCESSFUL, transactionLog.getDestinationMsisdn(), "amount", vend.getAmount());
+				asyncService.sendSuccessfulAirtimeTransferSms(transactionLog);
 			} catch (Exception e) {
 				log.error("Error sending sms", e);
 			}
@@ -230,6 +236,14 @@ public class VtuMtnVendListener implements MessageListener {
 			}
 			
 		} else {
+			
+			try {
+//				invoked asynchronously but just in case
+				asyncService.sendFailedAirtimeTransferSms(transactionLog);
+			} catch (Exception e) {
+				log.error("Error sending sms", e);
+			}
+			
 			transactionLog.setVtuStatus(Status.FAILED);
 			topupHistory.setStatus(Status.FAILED);
 			if(vendStatusCode != null){
