@@ -3,12 +3,9 @@
  */
 package com.sf.vas.mtnvtu.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.Asynchronous;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -16,11 +13,12 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sf.vas.atjpa.entities.Subscriber;
+import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnsms.service.SmsMtnService;
-import com.sf.vas.mtnvtu.enums.SmsProps;
+import com.sf.vas.utils.enums.SmsProps;
 import com.sf.vas.utils.exception.VasException;
-import com.sf.vas.utils.properties.VasProperties;
-import com.sf.vas.utils.restartifacts.sms.SmsRequest;
 
 /**
  * @author dawuzi
@@ -30,44 +28,62 @@ import com.sf.vas.utils.restartifacts.sms.SmsRequest;
 public class VtuMtnAsyncService {
 
 	private Logger log = LoggerFactory.getLogger(getClass());
-	private VasProperties vasProperties = new VasProperties();
-	private boolean initialized = false;
 	
 	@Inject
 	SmsMtnService smsMtnService;
 	
-	public VtuMtnAsyncService() {
-	}
-	
-	@PostConstruct
-	private void init(){
-		initProperties();
-	}
-	
-	private void initProperties() {
-		if(initialized){
-			return;
+	@Asynchronous
+	public void sendSuccessfulAirtimeTransferSms(VtuTransactionLog transactionLog){
+		
+		Subscriber sender = transactionLog.getSender();
+		
+		String recipientMsisdn = transactionLog.getDestinationMsisdn();
+		String subscriberMsisdn = sender.getPhoneNumber();
+		String amount = String.valueOf(transactionLog.getAmount().intValue());
+		String subscriberFullName = sender.getLastName()+" "+sender.getFirstName();
+		String subscriberName = sender.getFirstName();
+		
+		if(recipientMsisdn.startsWith("+")){
+			recipientMsisdn = recipientMsisdn.substring(1);
 		}
-		log.info("init properties called");
-		initialized = true;
-		try {
-			String smsPropsFile = System.getProperty("jboss.home.dir")+File.separator+"bin"+File.separator+"sms.properties";
-			log.info("smsPropsFile : "+smsPropsFile);
-			File file = new File(smsPropsFile);
-			if(!file.exists()){
-				log.warn("sms properties file does not exist"); 
-				return;
+		if(subscriberMsisdn.startsWith("+")){
+			subscriberMsisdn = subscriberMsisdn.substring(1);
+		}
+		
+		boolean sameUser = recipientMsisdn.equalsIgnoreCase(subscriberMsisdn);
+		
+		Map<String, Object> params = new HashMap<>();
+		
+		params.put("subscriberName", subscriberName);
+		params.put("number", recipientMsisdn);
+		params.put("amount", amount);
+		params.put("subscriberFullName", subscriberFullName);
+		
+		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
+		
+		switch (transactionType) {
+		
+		case AUTO:
+			sendSms(SmsProps.AUTO_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params);
+			if(!sameUser){
+				sendSms(SmsProps.AUTO_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params);
 			}
-			log.info("loading sms properties");
-			vasProperties.initProps(new FileInputStream(file));
-		} catch (FileNotFoundException e) {
-			log.error("FileNotFoundException", e);
-		} catch (IOException e) {
-			log.error("IOException", e);
+			break;
+		case ACTIVATION:
+			
+			break;
+		case INSTANT:
+			sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params);
+			if(!sameUser){
+				sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params);
+			}
+			break;
+
+		default:
+			break;
 		}
 	}
 	
-
 	/**
 	 * 
 	 * @param smsProps
@@ -76,21 +92,65 @@ public class VtuMtnAsyncService {
 	 */
 	@Asynchronous
 	public void sendSms(SmsProps smsProps, String msisdn, String param, String value) {
-		initProperties();
-		
-		String message = vasProperties.getProperty(smsProps.getKey(), smsProps.getDefaultValue(), param, value);
-		
-		SmsRequest smsRequest = new SmsRequest();
-		
-		smsRequest.setMessage(message);
-		smsRequest.setMsisdn(msisdn);
-		
-		log.info("message : "+message);
-		
 		try {
-			smsMtnService.sendSms(smsRequest);
+			smsMtnService.sendSms(smsProps, msisdn, param, value);
 		} catch (VasException e) {
 			log.error("VasException", e);
 		}
+	}
+	@Asynchronous
+	public void sendSms(SmsProps smsProps, String msisdn, Map<String, Object> params) {
+		try {
+			smsMtnService.sendSms(smsProps, msisdn, params);
+		} catch (VasException e) {
+			log.error("VasException", e);
+		}
+	}
+
+	/**
+	 * @param transactionLog
+	 */
+	@Asynchronous
+	public void sendFailedAirtimeTransferSms(VtuTransactionLog transactionLog) {
+
+		Subscriber sender = transactionLog.getSender();
+		
+		String recipientMsisdn = transactionLog.getDestinationMsisdn();
+		String subscriberMsisdn = sender.getPhoneNumber();
+		String subscriberName = sender.getFirstName();
+		
+		if(recipientMsisdn.startsWith("+")){
+			recipientMsisdn = recipientMsisdn.substring(1);
+		}
+		if(subscriberMsisdn.startsWith("+")){
+			subscriberMsisdn = subscriberMsisdn.substring(1);
+		}
+		
+		Map<String, Object> params = new HashMap<>();
+		
+		params.put("subscriberName", subscriberName);
+		params.put("number", recipientMsisdn);
+		params.put("reason", "server error");
+		
+		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
+		
+		transactionType = TransactionType.AUTO;
+		
+		switch (transactionType) {
+		
+		case AUTO:
+			sendSms(SmsProps.AUTO_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			break;
+		case ACTIVATION:
+			
+			break;
+		case INSTANT:
+			sendSms(SmsProps.INSTANT_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			break;
+
+		default:
+			break;
+		}
+		
 	}
 }
