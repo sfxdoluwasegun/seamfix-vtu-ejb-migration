@@ -78,7 +78,10 @@ public class VtuMtnAsyncService {
 				sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params);
 			}
 			break;
-
+		case SIGNUP_BONUS:
+			sendSms(SmsProps.BONUS_AIRTIME_SUCCESS, subscriberMsisdn, params);
+			break;
+			
 		default:
 			break;
 		}
@@ -130,6 +133,7 @@ public class VtuMtnAsyncService {
 		
 		params.put("subscriberName", subscriberName);
 		params.put("number", recipientMsisdn);
+		params.put("amount", transactionLog.getAmount().intValue());
 		params.put("reason", "server error");
 		
 		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
@@ -146,6 +150,9 @@ public class VtuMtnAsyncService {
 			break;
 		case INSTANT:
 			sendSms(SmsProps.INSTANT_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			break;
+		case SIGNUP_BONUS:
+			sendSms(SmsProps.BONUS_AIRTIME_ERROR, subscriberMsisdn, params);
 			break;
 
 		default:
