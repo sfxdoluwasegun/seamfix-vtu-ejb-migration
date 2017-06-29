@@ -64,15 +64,15 @@ public class VtuMtnQueryService extends QueryService {
 		}
 	}
 	
-	public String getSettingValue(VtuMtnSetting vtuSetting){
+	public String getSettingValue(VtuMtnSetting vtuMtnSetting){
 		
-		Settings settings = getSettingsByName(vtuSetting.name()); 
+		Settings settings = getSettingsByName(vtuMtnSetting.name()); 
 		
 		if(settings != null){
 			return settings.getValue();
 		}
 		
-		settings = createSetting(vtuSetting.name(), vtuSetting.getDefaultValue(), vtuSetting.getDefaultDescription());
+		settings = createSetting(vtuMtnSetting.name(), vtuMtnSetting.getDefaultValue(), vtuMtnSetting.getDefaultDescription());
 		
 		if(settings == null){
 			return null;

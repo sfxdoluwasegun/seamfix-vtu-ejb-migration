@@ -6,6 +6,7 @@ package com.sf.vas.mtnvtu.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -208,7 +209,7 @@ public class VtuMtnService {
 	
 //	Did this to avoid a transaction log being queued multiple times
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
+	private void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
 		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
 		
@@ -221,6 +222,35 @@ public class VtuMtnService {
 			jmsManager.sendVtuRequest(vtuTransactionLog);
 		} catch (JMSException e) {
 			throw new VasException(e);
+		}
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void retriggerFailedTransactionsBatch(List<VtuTransactionLog> vtuTransactionLogs) throws VasException{
+		if(vtuTransactionLogs == null || vtuTransactionLogs.isEmpty()){
+			return;
+		}
+		List<VtuTransactionLog> failedTransactions = vtuTransactionLogs.stream()
+				.filter(log -> (log != null && Status.FAILED.equals(log.getVtuStatus()))).collect(Collectors.toList());
+		
+		if(failedTransactions.isEmpty()){
+			return;
+		}
+		
+		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
+
+		for (VtuTransactionLog vtuTransactionLog : failedTransactions) {
+			
+			vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
+			vtuTransactionLog.setOriginatorMsisdn(originMsisdn); // we need to always use the updated originator msisdn
+			
+			vtuQueryService.update(vtuTransactionLog);
+			
+			try {
+				jmsManager.sendVtuRequest(vtuTransactionLog);
+			} catch (JMSException e) {
+				throw new VasException(e);
+			}
 		}
 	}
 	
