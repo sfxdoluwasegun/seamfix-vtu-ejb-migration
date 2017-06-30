@@ -95,6 +95,16 @@ public class VtuMtnVendListener implements MessageListener {
 					log.error("Error handling vtu request", e);
 					vtuTransactionLog.setVtuStatus(Status.FAILED);
 					
+					Integer failedCount = vtuTransactionLog.getFailedCount();
+					
+					if(failedCount == null){
+						vtuTransactionLog.setFailedCount(1);
+					} else {
+						failedCount = failedCount + 1;
+						
+						vtuTransactionLog.setFailedCount(failedCount);
+					}
+					
 					TopupHistory topupHistory = vtuTransactionLog.getTopupHistory(); 
 					
 					topupHistory.setStatus(Status.FAILED);
@@ -104,16 +114,12 @@ public class VtuMtnVendListener implements MessageListener {
 					vtuQueryService.update(vtuTransactionLog);
 					vtuQueryService.update(topupHistory);
 					
-					try {
-//						invoked asynchronously but just in case
-						asyncService.sendFailedAirtimeTransferSms(vtuTransactionLog);
-					} catch (Exception ex) {
-						log.error("Error sending sms", ex);
-					}
+					sendFailedAirtimeTransferSms(vtuTransactionLog);
+					
 				}
 			}
 		} catch (Exception e) {
-			log.error("Error handling vtu request", e);
+			log.error("Outter Error handling vtu request", e);
 		}
 	}
 
@@ -237,12 +243,17 @@ public class VtuMtnVendListener implements MessageListener {
 			
 		} else {
 			
-			try {
-//				invoked asynchronously but just in case
-				asyncService.sendFailedAirtimeTransferSms(transactionLog);
-			} catch (Exception e) {
-				log.error("Error sending sms", e);
+			Integer failedCount = transactionLog.getFailedCount();
+			
+			if(failedCount == null){
+				transactionLog.setFailedCount(1);
+			} else {
+				failedCount = failedCount + 1;
+				
+				transactionLog.setFailedCount(failedCount);
 			}
+			
+			sendFailedAirtimeTransferSms(transactionLog);
 			
 			transactionLog.setVtuStatus(Status.FAILED);
 			topupHistory.setStatus(Status.FAILED);
@@ -266,6 +277,39 @@ public class VtuMtnVendListener implements MessageListener {
 		if(transactionLog.getCallBackUrl() != null && !transactionLog.getCallBackUrl().trim().isEmpty()){
 			doCallBack(transactionLog);
 		}
+	}
+
+	/**
+	 * @param transactionLog
+	 */
+	private void sendFailedAirtimeTransferSms(VtuTransactionLog transactionLog) {
+		
+		Long maxAttempt;
+		
+		try {
+			maxAttempt = Long.valueOf(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS));
+		} catch (Exception e) {
+			maxAttempt = Long.valueOf(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS.getDefaultValue());
+		}
+		
+		Integer failedCount = transactionLog.getFailedCount();
+		
+		if(failedCount == null){
+			failedCount = 1;
+		}
+		
+		if(failedCount < maxAttempt){
+			log.info("skipping sending the failed sms because max attempts not reached yet. current retrial count : "+failedCount+", max attempt : "+maxAttempt);
+			return;
+		}
+		
+		try {
+//			invoked asynchronously but just in case
+			asyncService.sendFailedAirtimeTransferSms(transactionLog);
+		} catch (Exception e) {
+			log.error("Error sending sms", e);
+		}
+		
 	}
 
 	/**
