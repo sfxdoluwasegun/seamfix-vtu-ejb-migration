@@ -149,6 +149,8 @@ public class VtuMtnVendListener implements MessageListener {
 		vend.setSequence(String.valueOf(currentSequence)); 
 		vend.setTariffTypeId(transactionLog.getTariffTypeId());
 		
+		log.info("vend : "+vend);
+
 		VendResponse vendResponse = sendVendRequest(vend);
 		
 		VtuVendStatusCode vendStatusCode = null;
@@ -190,7 +192,6 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		setVendResponse(vendResponse, transactionLog);
 		
-		log.info("vend : "+vend);
 		log.info("vendResponse : "+vendResponse);
 		
 //		we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
