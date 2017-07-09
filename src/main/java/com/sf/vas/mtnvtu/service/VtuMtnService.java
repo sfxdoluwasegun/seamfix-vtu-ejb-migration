@@ -24,6 +24,7 @@ import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.mtnvtu.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
@@ -51,35 +52,27 @@ public class VtuMtnService {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
-	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequest request){
+	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request){
 		
 		AirtimeTransferResponse response = new AirtimeTransferResponse();
 		
-		Subscriber subscriber = vtuQueryService.getByPk(Subscriber.class, request.getUserId());
+		Subscriber subscriber = request.getSubscriber();
 		
 		if(subscriber == null){
 			response.assignResponseCode(ResponseCode.UNKNOWN_USER);
 			return response;
 		}
 		
-		TopUpProfile topUpProfile = null;
+		TopUpProfile topUpProfile = request.getTopUpProfile();
 		
-		if(request.getTopUpProfileId() != null){
-			topUpProfile = vtuQueryService.getByPk(TopUpProfile.class, request.getTopUpProfileId());
-			if(topUpProfile == null){
-				response.assignResponseCode(ResponseCode.UNKNOWN_TOP_UP_PROFILE);
-				return response;
-			}
-		}
-		
-		NetworkCarrier carrier = vtuQueryService.getNetworkCarrierByName(request.getNetworkCarrier());
+		NetworkCarrier carrier = request.getNetworkCarrier();
 		
 		if(carrier == null){
 			response.assignResponseCode(ResponseCode.UNKNOWN_NETWORK_CARRIER);
 			return response;
 		}
 		
-		TopupHistory topupHistory = vtuQueryService.getByPk(TopupHistory.class, request.getTopUpHistoryId());
+		TopupHistory topupHistory = request.getTopupHistory();
 		
 		if(topupHistory == null){
 			response.assignResponseCode(ResponseCode.UNKNOWN_TOP_UP_HISTORY);
