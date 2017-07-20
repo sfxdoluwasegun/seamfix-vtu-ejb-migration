@@ -54,6 +54,11 @@
 			<artifactId>mtn-sms</artifactId>
 			<version>0.0.1-final</version>
         </dependency>
+		<dependency>
+			<groupId>com.sf.vas</groupId>
+			<artifactId>autotopup-dsl</artifactId>
+		    <version>0.0.1-SNAPSHOT</version>
+		</dependency>
     </dependencies>
 	<distributionManagement>
 		<repository>
