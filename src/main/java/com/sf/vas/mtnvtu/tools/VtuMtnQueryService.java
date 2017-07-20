@@ -5,7 +5,6 @@ package com.sf.vas.mtnvtu.tools;
 
 import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -31,14 +30,6 @@ import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 @Stateless
 public class VtuMtnQueryService extends QueryService {
 
-	@PostConstruct
-	private void initialize(){
-//		create all the required settings on init
-		for(VtuMtnSetting setting : VtuMtnSetting.values()){
-			getSettingValue(setting);
-		}
-	}
-	
 	public String getSettingValue(String name){
 		Settings settings = getSettingsByName(name);
 		if(settings == null){

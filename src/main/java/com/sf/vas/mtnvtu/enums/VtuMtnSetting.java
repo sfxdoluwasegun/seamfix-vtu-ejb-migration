@@ -3,11 +3,14 @@
  */
 package com.sf.vas.mtnvtu.enums;
 
+import com.sf.vas.atjpa.enums.SettingsType;
+import com.sf.vas.dsl.contracts.ISettingInfo;
+
 /**
  * @author dawuzi
  *
  */
-public enum VtuMtnSetting {
+public enum VtuMtnSetting implements ISettingInfo {
 
     VTU_ORIGINATOR_MSISDN("2348068735763", "Airtime Pool Msisdn"),
     VTU_SERVICE_URL("http://41.206.4.75:8083/axis2/services/HostIFService", "This is the URL to the VTU service"),
@@ -38,5 +41,13 @@ public enum VtuMtnSetting {
     public String getDefaultDescription() {
         return defaultDescription;
     }
+    
+	public String getName() {
+		return name();
+	}
+	
+	public SettingsType getSettingsType() {
+		return SettingsType.GENERAL;
+	}
 
 }
