@@ -26,6 +26,7 @@ import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
@@ -218,7 +219,8 @@ public class VtuMtnVendListener implements MessageListener {
 			
 			TopUpProfile topUpProfile = transactionLog.getTopUpProfile();
 			
-			if(topUpProfile != null){
+//			only auto airtime should be added to the amount for the current cycle
+			if(TransactionType.AUTO.equals(topupHistory.getTransactionType()) && topUpProfile != null){
 			
 				currentCycleInfo = vtuMtnService.getCycleInfoCreateIfNotExist(topUpProfile);
 				
