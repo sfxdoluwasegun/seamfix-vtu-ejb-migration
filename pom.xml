@@ -4,7 +4,7 @@
 
     <groupId>com.sf.vas</groupId>
     <artifactId>mtn-vtu-integration</artifactId>
-    <version>0.0.2-final</version>
+    <version>0.0.3-SNAPSHOT</version>
     <packaging>ejb</packaging>
 
     <name>mtn-vtu-integration</name>
@@ -24,7 +24,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>vas-utils</artifactId>
-			<version>0.0.7-final</version>
+			<version>0.0.8-SNAPSHOT</version>
         </dependency>
         <dependency>
 			<groupId>org.projectlombok</groupId>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>atopup-jpa</artifactId>
-			<version>0.1.12-final</version>
+			<version>0.1.15-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.jms</groupId>
@@ -54,6 +54,11 @@
 			<artifactId>mtn-sms</artifactId>
 			<version>0.0.1-final</version>
         </dependency>
+		<dependency>
+			<groupId>com.sf.vas</groupId>
+			<artifactId>autotopup-dsl</artifactId>
+		    <version>0.0.1-SNAPSHOT</version>
+		</dependency>
     </dependencies>
 	<distributionManagement>
 		<repository>
@@ -75,8 +80,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <compilerArguments>
                         <endorseddirs>${endorsed.dir}</endorseddirs>
                     </compilerArguments>

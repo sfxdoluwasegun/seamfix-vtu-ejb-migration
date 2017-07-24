@@ -6,6 +6,7 @@ package com.sf.vas.mtnvtu.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -23,6 +24,7 @@ import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.mtnvtu.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
@@ -50,35 +52,27 @@ public class VtuMtnService {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
-	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequest request){
+	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request){
 		
 		AirtimeTransferResponse response = new AirtimeTransferResponse();
 		
-		Subscriber subscriber = vtuQueryService.getByPk(Subscriber.class, request.getUserId());
+		Subscriber subscriber = request.getSubscriber();
 		
 		if(subscriber == null){
 			response.assignResponseCode(ResponseCode.UNKNOWN_USER);
 			return response;
 		}
 		
-		TopUpProfile topUpProfile = null;
+		TopUpProfile topUpProfile = request.getTopUpProfile();
 		
-		if(request.getTopUpProfileId() != null){
-			topUpProfile = vtuQueryService.getByPk(TopUpProfile.class, request.getTopUpProfileId());
-			if(topUpProfile == null){
-				response.assignResponseCode(ResponseCode.UNKNOWN_TOP_UP_PROFILE);
-				return response;
-			}
-		}
-		
-		NetworkCarrier carrier = vtuQueryService.getNetworkCarrierByName(request.getNetworkCarrier());
+		NetworkCarrier carrier = request.getNetworkCarrier();
 		
 		if(carrier == null){
 			response.assignResponseCode(ResponseCode.UNKNOWN_NETWORK_CARRIER);
 			return response;
 		}
 		
-		TopupHistory topupHistory = vtuQueryService.getByPk(TopupHistory.class, request.getTopUpHistoryId());
+		TopupHistory topupHistory = request.getTopupHistory();
 		
 		if(topupHistory == null){
 			response.assignResponseCode(ResponseCode.UNKNOWN_TOP_UP_HISTORY);
@@ -208,7 +202,7 @@ public class VtuMtnService {
 	
 //	Did this to avoid a transaction log being queued multiple times
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
+	private void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
 		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
 		
@@ -221,6 +215,35 @@ public class VtuMtnService {
 			jmsManager.sendVtuRequest(vtuTransactionLog);
 		} catch (JMSException e) {
 			throw new VasException(e);
+		}
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void retriggerFailedTransactionsBatch(List<VtuTransactionLog> vtuTransactionLogs) throws VasException{
+		if(vtuTransactionLogs == null || vtuTransactionLogs.isEmpty()){
+			return;
+		}
+		List<VtuTransactionLog> failedTransactions = vtuTransactionLogs.stream()
+				.filter(log -> (log != null && Status.FAILED.equals(log.getVtuStatus()))).collect(Collectors.toList());
+		
+		if(failedTransactions.isEmpty()){
+			return;
+		}
+		
+		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
+
+		for (VtuTransactionLog vtuTransactionLog : failedTransactions) {
+			
+			vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
+			vtuTransactionLog.setOriginatorMsisdn(originMsisdn); // we need to always use the updated originator msisdn
+			
+			vtuQueryService.update(vtuTransactionLog);
+			
+			try {
+				jmsManager.sendVtuRequest(vtuTransactionLog);
+			} catch (JMSException e) {
+				throw new VasException(e);
+			}
 		}
 	}
 	

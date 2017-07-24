@@ -3,11 +3,14 @@
  */
 package com.sf.vas.mtnvtu.enums;
 
+import com.sf.vas.atjpa.enums.SettingsType;
+import com.sf.vas.dsl.contracts.ISettingInfo;
+
 /**
  * @author dawuzi
  *
  */
-public enum VtuMtnSetting {
+public enum VtuMtnSetting implements ISettingInfo {
 
     VTU_ORIGINATOR_MSISDN("2348068735763", "Airtime Pool Msisdn"),
     VTU_SERVICE_URL("http://41.206.4.75:8083/axis2/services/HostIFService", "This is the URL to the VTU service"),
@@ -18,6 +21,7 @@ public enum VtuMtnSetting {
     VTU_VEND_PASSWORD("yy+c5vgxg1PZesNOTzp6ww==", "vend password"),
 //    SSL_TRUST_STORE_FILE_PATH("/opt/autotopup-service/bin/vtm_mtnonline_com.keystore", "javax.net.ssl.trustStore value"),
 //    SSL_TRUST_STORE_PASSWORD("jgX5oP9F8u7PMWNNeBhkug==", "javax.net.ssl.trustStorePassword value"), // plain value = "test" with defaultSecurityKey
+    VTU_FAILED_MAX_RETRIAL_ATTEMPTS("3", "Maximum retrial attempts for failed vtu transactions"),
     
     ;
 
@@ -37,5 +41,13 @@ public enum VtuMtnSetting {
     public String getDefaultDescription() {
         return defaultDescription;
     }
+    
+	public String getName() {
+		return name();
+	}
+	
+	public SettingsType getSettingsType() {
+		return SettingsType.GENERAL;
+	}
 
 }
