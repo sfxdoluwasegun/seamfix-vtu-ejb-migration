@@ -147,7 +147,7 @@ public class VtuMtnAsyncService {
 		params.put("subscriberName", subscriberName);
 		params.put("number", recipientMsisdn);
 		params.put("amount", transactionLog.getAmount().intValue());
-		params.put("reason", "server unable process request at the moment");
+		params.put("reason", "server unable to process request at the moment");
 		
 		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
 		
