@@ -24,7 +24,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>vas-utils</artifactId>
-			<version>0.0.7-final</version>
+			<version>0.0.8-SNAPSHOT</version>
         </dependency>
         <dependency>
 			<groupId>org.projectlombok</groupId>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>atopup-jpa</artifactId>
-			<version>0.1.13-SNAPSHOT</version>
+			<version>0.1.15-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.jms</groupId>
