@@ -20,6 +20,10 @@ import javax.jms.ObjectMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sf.vas.airtimevend.mtn.dto.VendDto;
+import com.sf.vas.airtimevend.mtn.dto.VendResponseDto;
+import com.sf.vas.airtimevend.mtn.enums.MtnVtuVendStatusCode;
+import com.sf.vas.airtimevend.mtn.soapartifacts.VendResponse;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.TopUpProfile;
@@ -28,13 +32,9 @@ import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
+import com.sf.vas.mtnvtu.service.MtnNgVtuWrapperService;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
 import com.sf.vas.mtnvtu.service.VtuMtnService;
-import com.sf.vas.mtnvtu.service.VtuMtnSoapService;
-import com.sf.vas.mtnvtu.soapartifacts.HostIFServicePortType;
-import com.sf.vas.mtnvtu.soapartifacts.Vend;
-import com.sf.vas.mtnvtu.soapartifacts.VendResponse;
 
 /**
  * @author dawuzi
@@ -49,9 +49,6 @@ import com.sf.vas.mtnvtu.soapartifacts.VendResponse;
 public class VtuMtnVendListener implements MessageListener {
 
 	@Inject
-	VtuMtnSoapService soapService;
-	
-	@Inject
 	VtuMtnQueryService vtuQueryService;
 	
 	@Inject
@@ -59,6 +56,9 @@ public class VtuMtnVendListener implements MessageListener {
 	
 	@Inject
 	VtuMtnAsyncService asyncService;
+	
+	@Inject
+	MtnNgVtuWrapperService mtnNgVtuWrapperService;
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -68,6 +68,7 @@ public class VtuMtnVendListener implements MessageListener {
 	
 	@PostConstruct
 	private void init(){
+		
 		try {
 			currentSequence = Long.parseLong(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER));
 			vtuCurrentSeqNoSettings = vtuQueryService.getSettingsByName(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER.name());
@@ -139,68 +140,82 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(destinationMsisdn.startsWith("+")){
 			destinationMsisdn = destinationMsisdn.substring(1);
-			transactionLog.setDestinationMsisdn(destinationMsisdn); // we need to update the vtu log and remove the plus sign if it present
+//			transactionLog.setDestinationMsisdn(destinationMsisdn); // we need to update the vtu log and remove the plus sign if it present
 		}
 		
-		Vend vend = new Vend();
+		VendDto vendDto = new VendDto();
 		
-		vend.setAmount(String.valueOf(transactionLog.getAmount().intValue()));
-		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
-		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
-		vend.setSequence(String.valueOf(currentSequence)); 
-		vend.setTariffTypeId(transactionLog.getTariffTypeId());
+		vendDto.setAmount(transactionLog.getAmount().intValue());
+		vendDto.setDestMsisdn(destinationMsisdn);
+		vendDto.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
+		vendDto.setSequence(currentSequence);
+		vendDto.setTariffTypeId(transactionLog.getTariffTypeId());
 		
-		log.info("vend : "+vend);
-
-		VendResponse vendResponse = sendVendRequest(vend);
+		VendResponseDto vendResponseDto = mtnNgVtuWrapperService.sendVendRequest(vendDto);
 		
-		VtuVendStatusCode vendStatusCode = null;
+//		Vend vend = new Vend();
+//		
+//		vend.setAmount(String.valueOf(transactionLog.getAmount().intValue()));
+//		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
+//		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
+//		vend.setSequence(String.valueOf(currentSequence)); 
+//		vend.setTariffTypeId(transactionLog.getTariffTypeId());
+//		
+//		log.info("vend : "+vend);
+//
+//		VendResponse vendResponse = sendVendRequest(vend);
+//		
+//		VtuVendStatusCode vendStatusCode = null;
+//		
+//		if(vendResponse.getStatusId() != null){
+//			vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
+//		}
+//		
+////		ideally this should only happen once
+//		while(vendStatusCode != null && VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.equals(vendStatusCode)){
+//			
+//			log.info("sequence number check failed vendResponse : "+vendResponse);
+//			
+////			this check was done because it was noticed that for sequence number check failed responses, MTN Vend system may not send the 
+////			last valid sequence number as indicated in their API document. In that case, we just increment the currentSequence number and retry
+//			if(vendResponse.getLasseq() != null){
+////				Added another try catch block just in case they send a non numeric value too
+//				try {
+//					currentSequence = Long.parseLong(vendResponse.getLasseq().trim());
+//				} catch (NumberFormatException e) {
+//					log.error("invalid lasseq number sent from MTN Vend Service. lasseq : "+vendResponse.getLasseq());
+//				}
+//			} else {
+//				log.error("invalid lasseq number sent from MTN Vend Service. lasseq is null");
+//			}
+//			
+//			currentSequence++;
+//			vend.setSequence(String.valueOf(currentSequence));
+//			vendResponse = sendVendRequest(vend);
+//			vendStatusCode = null;
+//			if(vendResponse.getStatusId() != null){
+//				vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
+//			}
+//		}
 		
-		if(vendResponse.getStatusId() != null){
-			vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
-		}
-		
-//		ideally this should only happen once
-		while(vendStatusCode != null && VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.equals(vendStatusCode)){
-			
-			log.info("sequence number check failed vendResponse : "+vendResponse);
-			
-//			this check was done because it was noticed that for sequence number check failed responses, MTN Vend system may not send the 
-//			last valid sequence number as indicated in their API document. In that case, we just increment the currentSequence number and retry
-			if(vendResponse.getLasseq() != null){
-//				Added another try catch block just in case they send a non numeric value too
-				try {
-					currentSequence = Long.parseLong(vendResponse.getLasseq().trim());
-				} catch (NumberFormatException e) {
-					log.error("invalid lasseq number sent from MTN Vend Service. lasseq : "+vendResponse.getLasseq());
-				}
-			} else {
-				log.error("invalid lasseq number sent from MTN Vend Service. lasseq is null");
-			}
-			
-			currentSequence++;
-			vend.setSequence(String.valueOf(currentSequence));
-			vendResponse = sendVendRequest(vend);
-			vendStatusCode = null;
-			if(vendResponse.getStatusId() != null){
-				vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
-			}
-		}
+		currentSequence = vendResponseDto.getUsedSequence();
 		
 		TopupHistory topupHistory = transactionLog.getTopupHistory(); 
 		
 		transactionLog.setSequence(currentSequence);
 		
-		setVendResponse(vendResponse, transactionLog);
+		setVendResponse(vendResponseDto, transactionLog);
 		
-		log.info("vendResponse : "+vendResponse);
+		log.info("vendResponse : "+vendResponseDto);
 		
 //		we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
 		vtuQueryService.update(transactionLog);
 		
 		CurrentCycleInfo currentCycleInfo = null;
 		
-		if(vendStatusCode != null && VtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
+		MtnVtuVendStatusCode vendStatusCode = vendResponseDto.getStatusCode();
+		
+		if(vendStatusCode != null && MtnVtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
 			
 			try {
 //				invoked asynchronously but just in case
@@ -331,7 +346,10 @@ public class VtuMtnVendListener implements MessageListener {
 	 * @param vendResponse
 	 * @param transactionLog
 	 */
-	private void setVendResponse(VendResponse vendResponse, VtuTransactionLog transactionLog) {
+	private void setVendResponse(VendResponseDto vendResponseDto, VtuTransactionLog transactionLog) {
+		
+		VendResponse vendResponse = vendResponseDto.getVendResponse();
+		
 		transactionLog.setStatusId(vendResponse.getStatusId());
 		transactionLog.setTxRefId(vendResponse.getTxRefId());
 		transactionLog.setSeqStatus(vendResponse.getSeqstatus());
@@ -343,12 +361,12 @@ public class VtuMtnVendListener implements MessageListener {
 		transactionLog.setResponseMessage(vendResponse.getResponseMessage());
 	}
 
-	/**
-	 * @param vend
-	 * @return
-	 */
-	private VendResponse sendVendRequest(Vend vend) {
-		HostIFServicePortType hostIFServicePortType = soapService.getHostIFServicePortType();
-		return hostIFServicePortType.vend(vend);
-	}
+//	/**
+//	 * @param vend
+//	 * @return
+//	 */
+//	private VendResponse sendVendRequest(Vend vend) {
+//		HostIFServicePortType hostIFServicePortType = soapService.getHostIFServicePortType();
+//		return hostIFServicePortType.vend(vend);
+//	}
 }

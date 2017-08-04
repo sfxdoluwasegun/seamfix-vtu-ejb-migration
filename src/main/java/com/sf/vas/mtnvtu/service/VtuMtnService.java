@@ -23,6 +23,7 @@ import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.mtnvtu.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
@@ -32,9 +33,9 @@ import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
 import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
-import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferRequest;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferStatusResponse;
+import com.sf.vas.vtu.IAirtimeTransferHandler;
 
 /**
  * @author dawuzi
@@ -49,6 +50,9 @@ public class VtuMtnService {
 	
 	@Inject
 	VtuMtnJmsManager jmsManager;
+	
+	@Inject
+	MtnNgVtuWrapperService mtnNgVtuWrapperService;
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -79,46 +83,27 @@ public class VtuMtnService {
 			return response;
 		}
 		
-		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
-		String serviceProviderId = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_SERVICE_PROVIDER_ID);
+		NetworkCarrierType type = carrier.getType() == null ? NetworkCarrierType.MTN_NG : carrier.getType();
 		
-		VtuTransactionLog transactionLog = new VtuTransactionLog();
+		IAirtimeTransferHandler handler = getAirtimeTransferHandler(type);
 		
-		transactionLog.setAmount(request.getAmount());
-		transactionLog.setCallBackUrl(request.getCallbackUrl());
-		transactionLog.setOriginatorMsisdn(originMsisdn);
-		transactionLog.setDestinationMsisdn(request.getMsisdn());
-		transactionLog.setSender(subscriber);
-		transactionLog.setTariffTypeId(getTariffTypeId(request.getAmount()));
-		transactionLog.setTopupHistory(topupHistory); 
-		transactionLog.setTopUpProfile(topUpProfile); 
-		transactionLog.setServiceProviderId(serviceProviderId);
-		transactionLog.setNetworkCarrier(carrier);
-		transactionLog.setVtuStatus(Status.PENDING);
+		return handler.handleTransferAirtime(request);
+
+	}
+
+	private IAirtimeTransferHandler getAirtimeTransferHandler(NetworkCarrierType type) {
+
+		type = type == null ? NetworkCarrierType.MTN_NG : type;
 		
-		vtuQueryService.createImmediately(transactionLog);
+		switch (type) {
 		
-		try {
-			jmsManager.sendVtuRequest(transactionLog);
-		} catch (JMSException e) {
-			throw new VasRuntimeException(e);
+		case MTN_NG:
+			return mtnNgVtuWrapperService;
+
+		default:
+			return mtnNgVtuWrapperService;
 		}
-		
-		response.assignResponseCode(ResponseCode.SUCCESS);
-		response.setTransactionId(transactionLog.getPk());
-		
-		return response;
 	}
-
-	/**
-	 * this houses the logic for tariff type ids for amount based on the clarification from the VTU service providers
-	 * @param amount
-	 * @return
-	 */
-	private String getTariffTypeId(BigDecimal amount) {
-		return "4";
-	}
-
 
 	/**
 	 * @param transactionId
