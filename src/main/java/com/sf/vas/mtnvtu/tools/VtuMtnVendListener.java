@@ -139,13 +139,12 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(destinationMsisdn.startsWith("+")){
 			destinationMsisdn = destinationMsisdn.substring(1);
-			transactionLog.setDestinationMsisdn(destinationMsisdn); // we need to update the vtu log and remove the plus sign if it present
 		}
 		
 		Vend vend = new Vend();
 		
 		vend.setAmount(String.valueOf(transactionLog.getAmount().intValue()));
-		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
+		vend.setDestMsisdn(destinationMsisdn);
 		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
 		vend.setSequence(String.valueOf(currentSequence)); 
 		vend.setTariffTypeId(transactionLog.getTariffTypeId());
