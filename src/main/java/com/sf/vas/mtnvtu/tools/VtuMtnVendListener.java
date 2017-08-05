@@ -265,7 +265,7 @@ public class VtuMtnVendListener implements MessageListener {
 			} else {
 				topupHistory.setFailureReason("VTU VEND ERROR");
 			}
-			topupHistory.setDisplayFailureReason("Oops! server error, we are unable to credit you at the moment. Kindly contact support");
+			topupHistory.setDisplayFailureReason(getDisplayFailureReason(vendStatusCode));
 		}
 		
 		vtuQueryService.update(transactionLog);
@@ -279,6 +279,25 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(transactionLog.getCallBackUrl() != null && !transactionLog.getCallBackUrl().trim().isEmpty()){
 			doCallBack(transactionLog);
+		}
+	}
+
+	private String getDisplayFailureReason(VtuVendStatusCode vendStatusCode) {
+		
+		String defaultReason = "Oops! server error, we are unable to credit you at the moment. Kindly contact support";
+		
+		if(vendStatusCode == null){
+			return defaultReason;
+		}
+		
+		switch (vendStatusCode) {
+		case MSISDN_BARRED:
+		case INVALID_MSISDN:
+		case TEMPORARY_INVALID_MSISDN:
+			return "Oops ! Could not transfer airtime. Reason : "+vendStatusCode.getResponseDescription();
+
+		default:
+			return defaultReason;
 		}
 	}
 
