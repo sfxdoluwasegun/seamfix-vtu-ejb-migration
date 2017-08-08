@@ -291,9 +291,11 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		switch (vendStatusCode) {
 		case MSISDN_BARRED:
+			return "Oops ! Could not transfer airtime. Reason : Phone number barred";
 		case INVALID_MSISDN:
+			return "Oops ! Could not transfer airtime. Reason : Invalid MTN phone number";
 		case TEMPORARY_INVALID_MSISDN:
-			return "Oops ! Could not transfer airtime. Reason : "+vendStatusCode.getResponseDescription();
+			return "Oops ! Could not transfer airtime. Reason : Temporary Invalid MTN phone number";
 
 		default:
 			return defaultReason;
