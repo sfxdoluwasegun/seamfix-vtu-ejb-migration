@@ -139,13 +139,12 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(destinationMsisdn.startsWith("+")){
 			destinationMsisdn = destinationMsisdn.substring(1);
-			transactionLog.setDestinationMsisdn(destinationMsisdn); // we need to update the vtu log and remove the plus sign if it present
 		}
 		
 		Vend vend = new Vend();
 		
 		vend.setAmount(String.valueOf(transactionLog.getAmount().intValue()));
-		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
+		vend.setDestMsisdn(destinationMsisdn);
 		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
 		vend.setSequence(String.valueOf(currentSequence)); 
 		vend.setTariffTypeId(transactionLog.getTariffTypeId());
@@ -265,7 +264,7 @@ public class VtuMtnVendListener implements MessageListener {
 			} else {
 				topupHistory.setFailureReason("VTU VEND ERROR");
 			}
-			topupHistory.setDisplayFailureReason("Oops! server error, we are unable to credit you at the moment. Kindly contact support");
+			topupHistory.setDisplayFailureReason(getDisplayFailureReason(vendStatusCode));
 		}
 		
 		vtuQueryService.update(transactionLog);
@@ -279,6 +278,27 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(transactionLog.getCallBackUrl() != null && !transactionLog.getCallBackUrl().trim().isEmpty()){
 			doCallBack(transactionLog);
+		}
+	}
+
+	private String getDisplayFailureReason(VtuVendStatusCode vendStatusCode) {
+		
+		String defaultReason = "Oops! server error, we are unable to credit you at the moment. Kindly contact support";
+		
+		if(vendStatusCode == null){
+			return defaultReason;
+		}
+		
+		switch (vendStatusCode) {
+		case MSISDN_BARRED:
+			return "Oops ! Could not transfer airtime. Reason : Phone number barred";
+		case INVALID_MSISDN:
+			return "Oops ! Could not transfer airtime. Reason : Invalid MTN phone number";
+		case TEMPORARY_INVALID_MSISDN:
+			return "Oops ! Could not transfer airtime. Reason : Temporary Invalid MTN phone number";
+
+		default:
+			return defaultReason;
 		}
 	}
 
