@@ -106,6 +106,16 @@ public class VtuMtnService {
 	}
 
 	/**
+	 * this houses the logic for tariff type ids for amount based on the clarification from the VTU service providers
+	 * @param amount
+	 * @return
+	 */
+	private String getTariffTypeId(BigDecimal amount) {
+		return "4";
+	}
+
+
+	/**
 	 * @param transactionId
 	 * @return
 	 */
