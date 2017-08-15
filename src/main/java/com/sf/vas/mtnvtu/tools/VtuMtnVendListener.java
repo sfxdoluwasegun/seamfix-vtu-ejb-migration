@@ -39,7 +39,7 @@ import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.mtnvtu.service.VtuMtnSoapService;
 import com.sf.vas.mtnvtu.soapartifacts.HostIFServicePortType;
 import com.sf.vas.mtnvtu.soapartifacts.Vend;
-import com.sf.vas.mtnvtu.soapartifacts.VendResponse;
+//import com.sf.vas.mtnvtu.soapartifacts.VendResponse;
 
 /**
  * @author dawuzi
@@ -304,7 +304,7 @@ public class VtuMtnVendListener implements MessageListener {
 		}
 	}
 
-	private String getDisplayFailureReason(VtuVendStatusCode vendStatusCode) {
+	private String getDisplayFailureReason(MtnVtuVendStatusCode vendStatusCode) {
 		
 		String defaultReason = "Oops! server error, we are unable to credit you at the moment. Kindly contact support";
 		
