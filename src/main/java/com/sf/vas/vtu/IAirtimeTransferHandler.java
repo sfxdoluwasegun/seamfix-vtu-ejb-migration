@@ -1,5 +1,8 @@
 package com.sf.vas.vtu;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sf.vas.mtnvtu.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 
@@ -8,8 +11,10 @@ import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
  *
  */
 
-public interface IAirtimeTransferHandler {
+public abstract class IAirtimeTransferHandler {
 	
-	AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request);
+	protected Logger log = LoggerFactory.getLogger(getClass());
+	
+	public abstract AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request);
 	
 }

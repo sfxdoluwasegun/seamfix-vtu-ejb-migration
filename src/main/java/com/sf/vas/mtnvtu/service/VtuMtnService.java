@@ -32,9 +32,9 @@ import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
 import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
 import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
 import com.sf.vas.utils.exception.VasException;
-import com.sf.vas.utils.exception.VasRuntimeException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferStatusResponse;
+import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 import com.sf.vas.vtu.IAirtimeTransferHandler;
 
 /**
@@ -66,8 +66,6 @@ public class VtuMtnService {
 			response.assignResponseCode(ResponseCode.UNKNOWN_USER);
 			return response;
 		}
-		
-		TopUpProfile topUpProfile = request.getTopUpProfile();
 		
 		NetworkCarrier carrier = request.getNetworkCarrier();
 		

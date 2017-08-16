@@ -1,4 +1,4 @@
-package com.sf.vas.mtnvtu.service;
+package com.sf.vas.vend.wrappers;
 
 import java.math.BigDecimal;
 
@@ -6,9 +6,6 @@ import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.jms.JMSException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.sf.vas.airtimevend.mtn.dto.MtnVtuInitParams;
 import com.sf.vas.airtimevend.mtn.dto.VendDto;
@@ -33,15 +30,12 @@ import com.sf.vas.vtu.IAirtimeTransferHandler;
  */
 
 @Stateless
-public class MtnNgVtuWrapperService implements IAirtimeTransferHandler {
-	
-	@SuppressWarnings("unused")
-	private Logger log = LoggerFactory.getLogger(getClass());
+public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 	
 	@Inject
 	private VtuMtnQueryService vtuQueryService;
 	
-	private com.sf.vas.airtimevend.mtn.service.VtuMtnService mtnService;
+	private VtuMtnService mtnService;
 	
 	@Inject
 	VtuMtnJmsManager jmsManager;

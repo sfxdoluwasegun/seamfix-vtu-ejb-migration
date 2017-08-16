@@ -23,6 +23,14 @@ public enum VtuMtnSetting implements ISettingInfo {
 //    SSL_TRUST_STORE_PASSWORD("jgX5oP9F8u7PMWNNeBhkug==", "javax.net.ssl.trustStorePassword value"), // plain value = "test" with defaultSecurityKey
     VTU_FAILED_MAX_RETRIAL_ATTEMPTS("3", "Maximum retrial attempts for failed vtu transactions"),
     
+    GLO_NG_SERVICE_URL("http://41.203.65.11:8913/topupservice/service", "This is the URL to the glo topup service"),
+    GLO_NG_SERVICE_PASSWORD("dX0fvhZ8Ws7I3CUsFXNXIQ==", "This is the password to the glo topup service"),
+    GLO_NG_SENDER_PRINCIPAL_ID("WEB80000000001", "The principal id of the sender reseller"),    
+    GLO_NG_SENDER_PRINCIPAL_TYPE("RESELLERUSER", "The type of the sender principal ID which is typically RESELLERUSER"),
+    GLO_NG_SENDER_PRINCIPAL_USER_ID("9900", "This defines which user made the topup"),
+    GLO_NG_SENDER_ACCOUNT_SPECIFIER_ID("WEB7056670256", "This is the account type of sender reseller. Usually in the format WEB<vending-msisdn> eg WEB7056670256"),
+    GLO_NG_SENDER_ACCOUNT_SPECIFIER_TYPE_ID("RESELLER", "This the account type id for the sender account specifier"),
+
     ;
 
 	VtuMtnSetting(String defaultValue, String defaultDescription) {

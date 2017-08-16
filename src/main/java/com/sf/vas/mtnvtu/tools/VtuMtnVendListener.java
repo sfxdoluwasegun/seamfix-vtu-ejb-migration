@@ -32,14 +32,10 @@ import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
-import com.sf.vas.mtnvtu.service.MtnNgVtuWrapperService;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
 import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.mtnvtu.service.VtuMtnSoapService;
-import com.sf.vas.mtnvtu.soapartifacts.HostIFServicePortType;
-import com.sf.vas.mtnvtu.soapartifacts.Vend;
-//import com.sf.vas.mtnvtu.soapartifacts.VendResponse;
+import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 
 /**
  * @author dawuzi
@@ -53,9 +49,6 @@ import com.sf.vas.mtnvtu.soapartifacts.Vend;
 		@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")})
 public class VtuMtnVendListener implements MessageListener {
 
-	@Inject
-	VtuMtnSoapService soapService;
-	
 	@Inject
 	VtuMtnQueryService vtuQueryService;
 	
@@ -159,51 +152,6 @@ public class VtuMtnVendListener implements MessageListener {
 		vendDto.setTariffTypeId(transactionLog.getTariffTypeId());
 		
 		VendResponseDto vendResponseDto = mtnNgVtuWrapperService.sendVendRequest(vendDto);
-		
-//		Vend vend = new Vend();
-//		
-//		vend.setAmount(String.valueOf(transactionLog.getAmount().intValue()));
-//		vend.setDestMsisdn(transactionLog.getDestinationMsisdn());
-//		vend.setOrigMsisdn(transactionLog.getOriginatorMsisdn());
-//		vend.setSequence(String.valueOf(currentSequence)); 
-//		vend.setTariffTypeId(transactionLog.getTariffTypeId());
-//		
-//		log.info("vend : "+vend);
-//
-//		VendResponse vendResponse = sendVendRequest(vend);
-//		
-//		VtuVendStatusCode vendStatusCode = null;
-//		
-//		if(vendResponse.getStatusId() != null){
-//			vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
-//		}
-//		
-////		ideally this should only happen once
-//		while(vendStatusCode != null && VtuVendStatusCode.SEQUENCE_NUMBER_CHECK_FAILED.equals(vendStatusCode)){
-//			
-//			log.info("sequence number check failed vendResponse : "+vendResponse);
-//			
-////			this check was done because it was noticed that for sequence number check failed responses, MTN Vend system may not send the 
-////			last valid sequence number as indicated in their API document. In that case, we just increment the currentSequence number and retry
-//			if(vendResponse.getLasseq() != null){
-////				Added another try catch block just in case they send a non numeric value too
-//				try {
-//					currentSequence = Long.parseLong(vendResponse.getLasseq().trim());
-//				} catch (NumberFormatException e) {
-//					log.error("invalid lasseq number sent from MTN Vend Service. lasseq : "+vendResponse.getLasseq());
-//				}
-//			} else {
-//				log.error("invalid lasseq number sent from MTN Vend Service. lasseq is null");
-//			}
-//			
-//			currentSequence++;
-//			vend.setSequence(String.valueOf(currentSequence));
-//			vendResponse = sendVendRequest(vend);
-//			vendStatusCode = null;
-//			if(vendResponse.getStatusId() != null){
-//				vendStatusCode = VtuVendStatusCode.from(vendResponse.getStatusId());
-//			}
-//		}
 		
 		currentSequence = vendResponseDto.getUsedSequence();
 		
