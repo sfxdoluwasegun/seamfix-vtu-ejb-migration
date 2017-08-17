@@ -194,8 +194,9 @@ public class VtuMtnService {
 	
 	public void retriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
-		if(vtuTransactionLog == null || !Status.FAILED.equals(vtuTransactionLog.getVtuStatus())){
+		if(!isValidRetriggerVtuTransactionLog(vtuTransactionLog)){
 //			only failed vtu transactions should be re triggered
+			log.info("skipping invalid transaction log");
 			return;
 		}
 		
@@ -205,11 +206,6 @@ public class VtuMtnService {
 //	Did this to avoid a transaction log being queued multiple times
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	private void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
-		
-		if(!isValidRetriggerVtuTransactionLog(vtuTransactionLog)){
-			log.info("skipping invalid transaction log");
-			return;
-		}
 		
 		vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
 		
