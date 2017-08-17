@@ -15,8 +15,6 @@ import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
-import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 
 /**
@@ -31,7 +29,7 @@ public class VendService {
 	VasVendQueryService vtuQueryService;
 	
 	@Inject
-	VtuMtnService vtuMtnService;
+	VtuVasService vtuMtnService;
 	
 	@Inject
 	VtuMtnAsyncService asyncService;
@@ -114,7 +112,6 @@ public class VendService {
 		
 	}
 	
-
 	/**
 	 * @param transactionLog
 	 */
@@ -145,8 +142,5 @@ public class VendService {
 		} catch (Exception e) {
 			log.error("Error sending sms", e);
 		}
-		
 	}
-	
-	
 }

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.service;
+package com.sf.vas.vend.service;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.service;
+package com.sf.vas.vend.service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -45,7 +45,7 @@ import com.sf.vas.vtu.IAirtimeTransferHandler;
  */
 
 @Stateless
-public class VtuMtnService {
+public class VtuVasService {
 
 	@Inject
 	VasVendQueryService vtuQueryService;

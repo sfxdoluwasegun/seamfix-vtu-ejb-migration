@@ -28,9 +28,9 @@ import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
-import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.vend.service.VendService;
+import com.sf.vas.vend.service.VtuMtnAsyncService;
+import com.sf.vas.vend.service.VtuVasService;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 
 /**
@@ -49,7 +49,7 @@ public class VtuMtnVendListener implements MessageListener {
 	VasVendQueryService vtuQueryService;
 	
 	@Inject
-	VtuMtnService vtuMtnService;
+	VtuVasService vtuMtnService;
 	
 	@Inject
 	VtuMtnAsyncService asyncService;
