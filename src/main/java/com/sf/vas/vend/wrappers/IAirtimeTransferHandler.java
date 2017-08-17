@@ -1,4 +1,4 @@
-package com.sf.vas.vtu;
+package com.sf.vas.vend.wrappers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

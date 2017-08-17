@@ -14,8 +14,7 @@ import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.tools.VasVendQueryService;
+import com.sf.vas.vend.enums.VasVendSetting;
 
 /**
  * @author DAWUZI
@@ -120,9 +119,9 @@ public class VendService {
 		Long maxAttempt;
 		
 		try {
-			maxAttempt = Long.valueOf(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS));
+			maxAttempt = Long.valueOf(vtuQueryService.getSettingValue(VasVendSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS));
 		} catch (Exception e) {
-			maxAttempt = Long.valueOf(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS.getDefaultValue());
+			maxAttempt = Long.valueOf(VasVendSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS.getDefaultValue());
 		}
 		
 		Integer failedCount = transactionLog.getFailedCount();

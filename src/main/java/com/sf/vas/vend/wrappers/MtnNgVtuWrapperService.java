@@ -13,16 +13,15 @@ import com.sf.vas.airtimevend.mtn.dto.VendResponseDto;
 import com.sf.vas.airtimevend.mtn.service.VtuMtnService;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.mtnvtu.enums.ResponseCode;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
-import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
-import com.sf.vas.vtu.IAirtimeTransferHandler;
+import com.sf.vas.vend.enums.ResponseCode;
+import com.sf.vas.vend.enums.VasVendSetting;
+import com.sf.vas.vend.mtn.VtuMtnJmsManager;
+import com.sf.vas.vend.service.VasVendQueryService;
 
 /**
  * @author DAWUZI
@@ -46,8 +45,8 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 	@PostConstruct
 	private void init(){
 		
-		String sUsername = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_VEND_USERNAME);
-		String sPassword = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_VEND_PASSWORD);
+		String sUsername = vtuQueryService.getSettingValue(VasVendSetting.VTU_VEND_USERNAME);
+		String sPassword = vtuQueryService.getSettingValue(VasVendSetting.VTU_VEND_PASSWORD);
 		
 		if(sUsername == null || sUsername.trim().isEmpty() || sPassword == null || sPassword.trim().isEmpty()){
 			throw new VasRuntimeException("vend user name or password not configured"); 
@@ -62,7 +61,7 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 			throw new VasRuntimeException("error decrypting configured vend user name or password", e);
 		}
 		
-		String endpointUrl = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_SERVICE_URL);
+		String endpointUrl = vtuQueryService.getSettingValue(VasVendSetting.VTU_SERVICE_URL);
 		
 		MtnVtuInitParams params = new MtnVtuInitParams();
 		
@@ -77,8 +76,8 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 	@Override
 	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request) {
 		
-		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
-		String serviceProviderId = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_SERVICE_PROVIDER_ID);
+		String originMsisdn = vtuQueryService.getSettingValue(VasVendSetting.VTU_ORIGINATOR_MSISDN);
+		String serviceProviderId = vtuQueryService.getSettingValue(VasVendSetting.VTU_SERVICE_PROVIDER_ID);
 		
 		VtuTransactionLog transactionLog;
 		

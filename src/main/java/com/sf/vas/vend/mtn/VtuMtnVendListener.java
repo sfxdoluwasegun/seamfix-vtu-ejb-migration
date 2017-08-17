@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.tools;
+package com.sf.vas.vend.mtn;
 
 import java.util.concurrent.Future;
 
@@ -27,7 +27,8 @@ import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
+import com.sf.vas.vend.enums.VasVendSetting;
+import com.sf.vas.vend.service.VasVendQueryService;
 import com.sf.vas.vend.service.VendService;
 import com.sf.vas.vend.service.VtuMtnAsyncService;
 import com.sf.vas.vend.service.VtuVasService;
@@ -70,8 +71,8 @@ public class VtuMtnVendListener implements MessageListener {
 	private void init(){
 		
 		try {
-			currentSequence = Long.parseLong(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER));
-			vtuCurrentSeqNoSettings = vtuQueryService.getSettingsByName(VtuMtnSetting.VTU_CURRENT_SEQUENCE_NUMBER.name());
+			currentSequence = Long.parseLong(vtuQueryService.getSettingValue(VasVendSetting.VTU_CURRENT_SEQUENCE_NUMBER));
+			vtuCurrentSeqNoSettings = vtuQueryService.getSettingsByName(VasVendSetting.VTU_CURRENT_SEQUENCE_NUMBER.name());
 		} catch (NumberFormatException e) {
 			log.error("Error parsing CURRENT_SEQUENCE_NUMBER setting value. Using default value : "+currentSequence);
 		}

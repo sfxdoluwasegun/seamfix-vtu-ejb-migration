@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.tools;
+package com.sf.vas.vend.mtn;
 
 import javax.annotation.Resource;
 import javax.ejb.Singleton;

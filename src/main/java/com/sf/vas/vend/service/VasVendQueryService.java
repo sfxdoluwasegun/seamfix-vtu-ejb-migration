@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.tools;
+package com.sf.vas.vend.service;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import com.sf.vas.atjpa.enums.SettingsType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.parent.JEntity;
 import com.sf.vas.atjpa.tools.QueryService;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
+import com.sf.vas.vend.enums.VasVendSetting;
 
 /**
  * @author dawuzi
@@ -57,7 +57,7 @@ public class VasVendQueryService extends QueryService {
 		}
 	}
 	
-	public String getSettingValue(VtuMtnSetting vtuMtnSetting){
+	public String getSettingValue(VasVendSetting vtuMtnSetting){
 		
 		Settings settings = getSettingsByName(vtuMtnSetting.name()); 
 		

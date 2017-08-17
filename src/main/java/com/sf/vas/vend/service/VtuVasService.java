@@ -12,7 +12,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
-import javax.jms.JMSException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,18 +25,14 @@ import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.entities.VtuTransactionLog_;
 import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.mtnvtu.enums.ResponseCode;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
-import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
-import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
-import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferStatusResponse;
 import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
+import com.sf.vas.vend.enums.ResponseCode;
+import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.wrappers.GloNgVendWrapperService;
+import com.sf.vas.vend.wrappers.IAirtimeTransferHandler;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
-import com.sf.vas.vtu.IAirtimeTransferHandler;
 
 /**
  * @author dawuzi
@@ -121,77 +116,6 @@ public class VtuVasService {
 		return "4";
 	}
 
-
-	/**
-	 * @param transactionId
-	 * @return
-	 */
-	public AirtimeTransferStatusResponse handleAirtimeTransferRequestStatus(String transactionId) {
-
-		AirtimeTransferStatusResponse response = new AirtimeTransferStatusResponse();
-		
-		long tId;
-		
-		try {
-			tId = Long.parseLong(transactionId);
-		} catch (NumberFormatException e) {
-			response.assignResponseCode(ResponseCode.INVALID_REQUEST);
-			return response;
-		}
-		
-		VtuTransactionLog transactionLog = vtuQueryService.getByPk(VtuTransactionLog.class, tId);
-		
-		if(transactionLog == null){
-			response.assignResponseCode(ResponseCode.INVALID_REQUEST);
-			return response;
-		}
-		
-//		this success status code simply implies that the client REST call was successful. 
-//		The status field of the response POJO should be examined to obtain the actual status of the transaction with the target transaction ID
-		response.assignResponseCode(ResponseCode.SUCCESS);
-		
-		response.setStatus(transactionLog.getVtuStatus());
-		
-//		these status are pretty clear what the status is 
-		if(Status.PENDING.equals(transactionLog.getVtuStatus())
-				|| Status.SUCCESSFUL.equals(transactionLog.getVtuStatus())){
-			return response;
-		}
-		
-//		for FAILED and UNKNOWN statuses a reason can give more insights depending on the status from MTN
-		VtuVendStatusCode vendStatusCode = null;
-
-		if(transactionLog.getStatusId() != null){
-			vendStatusCode = VtuVendStatusCode.from(transactionLog.getStatusId());
-		}
-		
-//		this should not happen
-		if(vendStatusCode == null){
-			response.setReason("An error occurred processing the request");
-			return response;
-		}
-		
-		switch (vendStatusCode) {
-		
-		case INVALID_DESTINATION_MSISDN:
-		case INVALID_MSISDN:
-			response.setReason("Invalid phone number specified");
-			break;
-		case MSISDN_BARRED:
-			response.setReason("Phone number barred");
-			break;
-		case TEMPORARY_INVALID_MSISDN:
-			response.setReason("Phone number is temporarily invalid");
-			break;
-//			for other ones just a generic error message should suffice
-		default:
-			response.setReason("An error occurred processing the request");
-			break;
-		}
-		
-		return response;
-	}
-	
 	public void retriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
 		if(!isValidRetriggerVtuTransactionLog(vtuTransactionLog)){
@@ -298,8 +222,8 @@ public class VtuVasService {
 		
 		VtuTransactionLog transactionLog = new VtuTransactionLog();
 		
-		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
-		String serviceProviderId = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_SERVICE_PROVIDER_ID);
+		String originMsisdn = vtuQueryService.getSettingValue(VasVendSetting.VTU_ORIGINATOR_MSISDN);
+		String serviceProviderId = vtuQueryService.getSettingValue(VasVendSetting.VTU_SERVICE_PROVIDER_ID);
 		
 		transactionLog.setAmount(topupHistory.getAmount());
 		transactionLog.setCallBackUrl(null); //please confirm this

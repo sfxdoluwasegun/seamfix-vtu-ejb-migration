@@ -19,17 +19,16 @@ import com.sf.vas.airtimevend.glo.soapartifacts.RequestTopupResponse;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.mtnvtu.enums.ResponseCode;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
-import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
+import com.sf.vas.vend.enums.ResponseCode;
+import com.sf.vas.vend.enums.VasVendSetting;
+import com.sf.vas.vend.service.VasVendQueryService;
 import com.sf.vas.vend.service.VendService;
 import com.sf.vas.vend.service.VtuMtnAsyncService;
-import com.sf.vas.vtu.IAirtimeTransferHandler;
 
 /**
  * @author DAWUZI
@@ -58,7 +57,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 	@PostConstruct
 	private void init(){
 		
-		String sPassword = vtuQueryService.getSettingValue(VtuMtnSetting.GLO_NG_SERVICE_PASSWORD);
+		String sPassword = vtuQueryService.getSettingValue(VasVendSetting.GLO_NG_SERVICE_PASSWORD);
 		
 		if(sPassword == null || sPassword.trim().isEmpty()){
 			throw new VasRuntimeException("glo ng service password not configured"); 
@@ -71,9 +70,9 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 			throw new VasRuntimeException("error decrypting configured password", e);
 		}
 		
-		String serviceUrl = vtuQueryService.getSettingValue(VtuMtnSetting.GLO_NG_SERVICE_URL);
-		String senderPrincipalId = vtuQueryService.getSettingValue(VtuMtnSetting.GLO_NG_SENDER_PRINCIPAL_ID);
-		String senderPrincipalUserId = vtuQueryService.getSettingValue(VtuMtnSetting.GLO_NG_SENDER_PRINCIPAL_USER_ID);
+		String serviceUrl = vtuQueryService.getSettingValue(VasVendSetting.GLO_NG_SERVICE_URL);
+		String senderPrincipalId = vtuQueryService.getSettingValue(VasVendSetting.GLO_NG_SENDER_PRINCIPAL_ID);
+		String senderPrincipalUserId = vtuQueryService.getSettingValue(VasVendSetting.GLO_NG_SENDER_PRINCIPAL_USER_ID);
 		
 		GloVendInitParams initParams = new GloVendInitParams();
 		
