@@ -109,6 +109,9 @@ public class VendService {
 		
 		vtuQueryService.update(transactionLog);
 		vtuQueryService.update(topupHistory);
+
+		log.info("handleFailedVending transactionLog.getVtuStatus() : "+transactionLog.getVtuStatus());
+		
 	}
 	
 

@@ -23,6 +23,7 @@ import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.entities.VtuTransactionLog_;
 import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
@@ -49,8 +50,8 @@ public class VtuMtnService {
 	@Inject
 	VasVendQueryService vtuQueryService;
 	
-	@Inject
-	VtuMtnJmsManager jmsManager;
+//	@Inject
+//	VtuMtnJmsManager jmsManager;
 	
 	@Inject
 	MtnNgVtuWrapperService mtnNgVtuWrapperService;
@@ -205,18 +206,16 @@ public class VtuMtnService {
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	private void doRetriggerSingleFailedTransaction(VtuTransactionLog vtuTransactionLog) throws VasException {
 		
-		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
+		if(!isValidRetriggerVtuTransactionLog(vtuTransactionLog)){
+			log.info("skipping invalid transaction log");
+			return;
+		}
 		
 		vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
-		vtuTransactionLog.setOriginatorMsisdn(originMsisdn); // we need to always use the updated originator msisdn
 		
-		vtuQueryService.update(vtuTransactionLog);
+		AirtimeTransferRequestDTO airtimeTransferRequestDTO = getAirtimeTransferRequestDTO(vtuTransactionLog);
 		
-		try {
-			jmsManager.sendVtuRequest(vtuTransactionLog);
-		} catch (JMSException e) {
-			throw new VasException(e);
-		}
+		handleTransferAirtime(airtimeTransferRequestDTO);
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -225,51 +224,46 @@ public class VtuMtnService {
 			return;
 		}
 		List<VtuTransactionLog> failedTransactions = vtuTransactionLogs.stream()
-				.filter(log -> (log != null && Status.FAILED.equals(log.getVtuStatus()))).collect(Collectors.toList());
+				.filter(aLog -> isValidRetriggerVtuTransactionLog(aLog)).collect(Collectors.toList());
 		
 		if(failedTransactions.isEmpty()){
 			return;
 		}
 		
-		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
-		
-		
-
 		for (VtuTransactionLog vtuTransactionLog : failedTransactions) {
 			
 			vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
 			
+			AirtimeTransferRequestDTO airtimeTransferRequestDTO = getAirtimeTransferRequestDTO(vtuTransactionLog);
 			
+			handleTransferAirtime(airtimeTransferRequestDTO);
 			
-			
-			vtuTransactionLog.setOriginatorMsisdn(originMsisdn); // we need to always use the updated originator msisdn
-			
-			vtuQueryService.update(vtuTransactionLog);
-			
-			try {
-				jmsManager.sendVtuRequest(vtuTransactionLog);
-			} catch (JMSException e) {
-				throw new VasException(e);
-			}
 		}
 	}
 	
-	public void retriggerFailedVendTransactions() {
-		List<VtuTransactionLog> failedTransactionLogs = vtuQueryService.getFailedTransactionLogs();
+	private boolean isValidRetriggerVtuTransactionLog(VtuTransactionLog vtuTransactionLog){
+		return vtuTransactionLog != null && Status.FAILED.equals(vtuTransactionLog.getVtuStatus());
+	}
+	
+	private AirtimeTransferRequestDTO getAirtimeTransferRequestDTO(VtuTransactionLog vtuTransactionLog) {
 		
-		if(failedTransactionLogs == null || failedTransactionLogs.isEmpty()){
-			return;
-		}
-
-		for(VtuTransactionLog vtuTransactionLog : failedTransactionLogs){
-			try {
-				retriggerSingleFailedTransaction(vtuTransactionLog);
-			} catch (VasException e) {
-				log.error("Error retrigger log with pk : "+vtuTransactionLog.getPk(), e);
-			} 
-		}
+		VtuTransactionLog eagerLog = vtuQueryService.getByPkWithEagerLoading(VtuTransactionLog.class, vtuTransactionLog.getPk()
+				, VtuTransactionLog_.sender, VtuTransactionLog_.topUpProfile, VtuTransactionLog_.networkCarrier);
+		
+		AirtimeTransferRequestDTO airtimeTransferRequestDTO = new AirtimeTransferRequestDTO();
+		
+		airtimeTransferRequestDTO.setAmount(vtuTransactionLog.getAmount());
+		airtimeTransferRequestDTO.setCallbackUrl(vtuTransactionLog.getCallBackUrl());
+		airtimeTransferRequestDTO.setMsisdn(vtuTransactionLog.getDestinationMsisdn());
+		airtimeTransferRequestDTO.setNetworkCarrier(eagerLog.getNetworkCarrier());
+		airtimeTransferRequestDTO.setSubscriber(eagerLog.getSender());
+		airtimeTransferRequestDTO.setTopupHistory(vtuTransactionLog.getTopupHistory());
+		airtimeTransferRequestDTO.setTopUpProfile(eagerLog.getTopUpProfile());
+		airtimeTransferRequestDTO.setVtuTransactionLog(vtuTransactionLog); 
+		
+		return airtimeTransferRequestDTO;
 	}
-	
+
 	/**
 	 * @param profile
 	 * @return

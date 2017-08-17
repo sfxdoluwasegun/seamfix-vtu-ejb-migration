@@ -127,6 +127,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		
 		if(transactionLog.getPk() != null){
 			vtuQueryService.update(transactionLog);
+			log.info("after updating the txn log"); 
 		} else {
 			vtuQueryService.createImmediately(transactionLog);
 		}

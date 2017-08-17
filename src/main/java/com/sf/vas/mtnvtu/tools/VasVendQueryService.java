@@ -9,7 +9,9 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SingularAttribute;
 
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo_;
@@ -121,5 +123,31 @@ public class VasVendQueryService extends QueryService {
 				));
 		
 		return entityManager.createQuery(criteriaQuery).getResultList();
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <T> T getByPkWithEagerLoading(Class<T> clazz, 
+			long pk, SingularAttribute... attributes){
+
+		CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(clazz);
+		Root<T> root = criteriaQuery.from(clazz);
+
+		for (SingularAttribute attribute : attributes){
+			root.fetch(attribute, JoinType.LEFT);
+		}
+
+		criteriaQuery.select(root);
+		criteriaQuery.where(criteriaBuilder.and(
+				criteriaBuilder.equal(root.get("pk"), pk),
+				criteriaBuilder.equal(root.get("deleted"), false)
+				));
+
+		try {
+			return entityManager.createQuery(criteriaQuery).getSingleResult();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 }
