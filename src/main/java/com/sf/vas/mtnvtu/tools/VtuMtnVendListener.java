@@ -3,8 +3,6 @@
  */
 package com.sf.vas.mtnvtu.tools;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
@@ -26,15 +24,13 @@ import com.sf.vas.airtimevend.mtn.enums.MtnVtuVendStatusCode;
 import com.sf.vas.airtimevend.mtn.soapartifacts.VendResponse;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.Settings;
-import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
 import com.sf.vas.mtnvtu.service.VtuMtnService;
-import com.sf.vas.mtnvtu.service.VtuMtnSoapService;
+import com.sf.vas.vend.service.VendService;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 
 /**
@@ -60,6 +56,9 @@ public class VtuMtnVendListener implements MessageListener {
 	
 	@Inject
 	MtnNgVtuWrapperService mtnNgVtuWrapperService;
+	
+	@Inject
+	VendService vendService;
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -96,29 +95,13 @@ public class VtuMtnVendListener implements MessageListener {
 					handleVtuRequestMessage(vtuTransactionLog);
 				} catch (Exception e) {
 					log.error("Error handling vtu request", e);
-					vtuTransactionLog.setVtuStatus(Status.FAILED);
-					
-					Integer failedCount = vtuTransactionLog.getFailedCount();
-					
-					if(failedCount == null){
-						vtuTransactionLog.setFailedCount(1);
-					} else {
-						failedCount = failedCount + 1;
-						
-						vtuTransactionLog.setFailedCount(failedCount);
-					}
 					
 					TopupHistory topupHistory = vtuTransactionLog.getTopupHistory(); 
 					
-					topupHistory.setStatus(Status.FAILED);
 					topupHistory.setFailureReason("VTU VEND ERROR");
 					topupHistory.setDisplayFailureReason("Oops! An error occured while trying to credit your account. Kindly contact support");
 					
-					vtuQueryService.update(vtuTransactionLog);
-					vtuQueryService.update(topupHistory);
-					
-					sendFailedAirtimeTransferSms(vtuTransactionLog);
-					
+					vendService.handleFailedVending(vtuTransactionLog);
 				}
 			}
 		} catch (Exception e) {
@@ -172,74 +155,21 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		if(vendStatusCode != null && MtnVtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
 			
-			try {
-//				invoked asynchronously but just in case
-				asyncService.sendSuccessfulAirtimeTransferSms(transactionLog);
-			} catch (Exception e) {
-				log.error("Error sending sms", e);
-			}
-			
 //			this should only be updated for successful transaction
 			currentSequence++;
 			
-			transactionLog.setVtuStatus(Status.SUCCESSFUL);
-			topupHistory.setStatus(Status.SUCCESSFUL);
-			topupHistory.setFailureReason(null);
-			topupHistory.setDisplayFailureReason(null);
-			
-			TopUpProfile topUpProfile = transactionLog.getTopUpProfile();
-			
-//			only auto airtime should be added to the amount for the current cycle
-			if(TransactionType.AUTO.equals(topupHistory.getTransactionType()) && topUpProfile != null){
-			
-				currentCycleInfo = vtuMtnService.getCycleInfoCreateIfNotExist(topUpProfile);
-				
-				BigDecimal amount = topupHistory.getAmount();
-				
-				BigDecimal currentCummulativeAmount = currentCycleInfo.getCurrentCummulativeAmount(); 
-				
-				BigDecimal newCummulativeAmount = currentCummulativeAmount.add(amount);
-				
-				BigDecimal topupLimit = topUpProfile.getTopupLimit();
-				
-				BigDecimal newMaxAmountLeft = topupLimit.subtract(newCummulativeAmount);
-				
-				currentCycleInfo.setCurrentCummulativeAmount(newCummulativeAmount);
-				currentCycleInfo.setMaxAmountLeft(newMaxAmountLeft);
-				currentCycleInfo.setLastKnownTopupAmount(amount);
-			} else {
-//				this would be the case in an instant top up scenario and it is not subject to any top up limit restriction
-			}
+			vendService.handleSuccessfulVending(transactionLog);
 			
 		} else {
 			
-			Integer failedCount = transactionLog.getFailedCount();
-			
-			if(failedCount == null){
-				transactionLog.setFailedCount(1);
-			} else {
-				failedCount = failedCount + 1;
-				
-				transactionLog.setFailedCount(failedCount);
-			}
-			
-			sendFailedAirtimeTransferSms(transactionLog);
-			
-			transactionLog.setVtuStatus(Status.FAILED);
-			topupHistory.setStatus(Status.FAILED);
 			if(vendStatusCode != null){
 				topupHistory.setFailureReason("VTU VEND "+vendStatusCode.name());
 			} else {
 				topupHistory.setFailureReason("VTU VEND ERROR");
 			}
 			topupHistory.setDisplayFailureReason(getDisplayFailureReason(vendStatusCode));
-		}
-		
-		vtuQueryService.update(transactionLog);
-		vtuQueryService.update(topupHistory);
-		
-		if(currentCycleInfo != null){
-			vtuQueryService.update(currentCycleInfo);
+			
+			vendService.handleFailedVending(transactionLog);
 		}
 		
 		updateSequenceNumberSetting();
@@ -268,39 +198,6 @@ public class VtuMtnVendListener implements MessageListener {
 		default:
 			return defaultReason;
 		}
-	}
-
-	/**
-	 * @param transactionLog
-	 */
-	private void sendFailedAirtimeTransferSms(VtuTransactionLog transactionLog) {
-		
-		Long maxAttempt;
-		
-		try {
-			maxAttempt = Long.valueOf(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS));
-		} catch (Exception e) {
-			maxAttempt = Long.valueOf(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS.getDefaultValue());
-		}
-		
-		Integer failedCount = transactionLog.getFailedCount();
-		
-		if(failedCount == null){
-			failedCount = 1;
-		}
-		
-		if(failedCount < maxAttempt){
-			log.info("skipping sending the failed sms because max attempts not reached yet. current retrial count : "+failedCount+", max attempt : "+maxAttempt);
-			return;
-		}
-		
-		try {
-//			invoked asynchronously but just in case
-			asyncService.sendFailedAirtimeTransferSms(transactionLog);
-		} catch (Exception e) {
-			log.error("Error sending sms", e);
-		}
-		
 	}
 
 	/**
@@ -334,12 +231,4 @@ public class VtuMtnVendListener implements MessageListener {
 		transactionLog.setResponseMessage(vendResponse.getResponseMessage());
 	}
 
-//	/**
-//	 * @param vend
-//	 * @return
-//	 */
-//	private VendResponse sendVendRequest(Vend vend) {
-//		HostIFServicePortType hostIFServicePortType = soapService.getHostIFServicePortType();
-//		return hostIFServicePortType.vend(vend);
-//	}
 }

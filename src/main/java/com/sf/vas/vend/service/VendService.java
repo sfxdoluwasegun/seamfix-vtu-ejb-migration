@@ -5,12 +5,17 @@ import java.math.BigDecimal;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
+import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
+import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
 import com.sf.vas.mtnvtu.service.VtuMtnService;
 import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
 
@@ -27,7 +32,12 @@ public class VendService {
 	
 	@Inject
 	VtuMtnService vtuMtnService;
-
+	
+	@Inject
+	VtuMtnAsyncService asyncService;
+	
+	private Logger log = LoggerFactory.getLogger(getClass());
+	
 	public void handleSuccessfulVending(VtuTransactionLog transactionLog){
 		
 		CurrentCycleInfo currentCycleInfo = null;
@@ -68,6 +78,14 @@ public class VendService {
 		if(currentCycleInfo != null){
 			vtuQueryService.update(currentCycleInfo);
 		}
+		
+		try {
+//			invoked asynchronously but just in case
+			asyncService.sendSuccessfulAirtimeTransferSms(transactionLog);
+		} catch (Exception e) {
+			log.error("Error sending sms", e);
+		}
+		
 	}
 	
 	public void handleFailedVending(VtuTransactionLog transactionLog){
@@ -84,7 +102,7 @@ public class VendService {
 			transactionLog.setFailedCount(failedCount);
 		}
 		
-//		sendFailedAirtimeTransferSms(transactionLog);
+		sendFailedAirtimeTransferSms(transactionLog);
 		
 		transactionLog.setVtuStatus(Status.FAILED);
 		topupHistory.setStatus(Status.FAILED);
@@ -92,5 +110,40 @@ public class VendService {
 		vtuQueryService.update(transactionLog);
 		vtuQueryService.update(topupHistory);
 	}
+	
+
+	/**
+	 * @param transactionLog
+	 */
+	private void sendFailedAirtimeTransferSms(VtuTransactionLog transactionLog) {
+		
+		Long maxAttempt;
+		
+		try {
+			maxAttempt = Long.valueOf(vtuQueryService.getSettingValue(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS));
+		} catch (Exception e) {
+			maxAttempt = Long.valueOf(VtuMtnSetting.VTU_FAILED_MAX_RETRIAL_ATTEMPTS.getDefaultValue());
+		}
+		
+		Integer failedCount = transactionLog.getFailedCount();
+		
+		if(failedCount == null){
+			failedCount = 1;
+		}
+		
+		if(failedCount < maxAttempt){
+			log.info("skipping sending the failed sms because max attempts not reached yet. current retrial count : "+failedCount+", max attempt : "+maxAttempt);
+			return;
+		}
+		
+		try {
+//			invoked asynchronously but just in case
+			asyncService.sendFailedAirtimeTransferSms(transactionLog);
+		} catch (Exception e) {
+			log.error("Error sending sms", e);
+		}
+		
+	}
+	
 	
 }
