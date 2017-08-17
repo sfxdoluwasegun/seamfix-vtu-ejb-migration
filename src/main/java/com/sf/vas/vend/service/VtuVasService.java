@@ -45,9 +45,6 @@ public class VtuVasService {
 	@Inject
 	VasVendQueryService vtuQueryService;
 	
-//	@Inject
-//	VtuMtnJmsManager jmsManager;
-	
 	@Inject
 	MtnNgVtuWrapperService mtnNgVtuWrapperService;
 	
