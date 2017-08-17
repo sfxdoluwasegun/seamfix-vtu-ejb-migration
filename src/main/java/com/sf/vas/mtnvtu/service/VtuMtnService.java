@@ -34,6 +34,7 @@ import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferStatusResponse;
+import com.sf.vas.vend.wrappers.GloNgVendWrapperService;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 import com.sf.vas.vtu.IAirtimeTransferHandler;
 
@@ -53,6 +54,9 @@ public class VtuMtnService {
 	
 	@Inject
 	MtnNgVtuWrapperService mtnNgVtuWrapperService;
+	
+	@Inject
+	GloNgVendWrapperService gloNgVendWrapperService;
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -91,12 +95,16 @@ public class VtuMtnService {
 
 	private IAirtimeTransferHandler getAirtimeTransferHandler(NetworkCarrierType type) {
 
+		log.info("type : "+type);
+		
 		type = type == null ? NetworkCarrierType.MTN_NG : type;
 		
 		switch (type) {
 		
 		case MTN_NG:
 			return mtnNgVtuWrapperService;
+		case GLO_NG:
+			return gloNgVendWrapperService;
 
 		default:
 			return mtnNgVtuWrapperService;

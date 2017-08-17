@@ -194,9 +194,6 @@ public class VtuMtnVendListener implements MessageListener {
 			
 				currentCycleInfo = vtuMtnService.getCycleInfoCreateIfNotExist(topUpProfile);
 				
-				currentCycleInfo.setDateModified(new Timestamp(System.currentTimeMillis())); 
-				
-				
 				BigDecimal amount = topupHistory.getAmount();
 				
 				BigDecimal currentCummulativeAmount = currentCycleInfo.getCurrentCummulativeAmount(); 
