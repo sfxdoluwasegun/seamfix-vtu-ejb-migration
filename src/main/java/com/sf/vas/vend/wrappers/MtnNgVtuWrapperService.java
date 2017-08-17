@@ -16,7 +16,7 @@ import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
-import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
+import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -33,7 +33,7 @@ import com.sf.vas.vtu.IAirtimeTransferHandler;
 public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 	
 	@Inject
-	private VtuMtnQueryService vtuQueryService;
+	private VasVendQueryService vtuQueryService;
 	
 	private VtuMtnService mtnService;
 	
@@ -80,7 +80,13 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
 		String serviceProviderId = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_SERVICE_PROVIDER_ID);
 		
-		VtuTransactionLog transactionLog = new VtuTransactionLog();
+		VtuTransactionLog transactionLog;
+		
+		if(request.getVtuTransactionLog() != null){
+			transactionLog = request.getVtuTransactionLog();
+		} else {
+			transactionLog = new VtuTransactionLog();
+		}
 		
 		transactionLog.setAmount(request.getAmount());
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
@@ -94,7 +100,11 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
 		
-		vtuQueryService.createImmediately(transactionLog);
+		if(transactionLog.getPk() != null){
+			vtuQueryService.update(transactionLog);
+		} else {
+			vtuQueryService.createImmediately(transactionLog);
+		}
 		
 		try {
 			jmsManager.sendVtuRequest(transactionLog);

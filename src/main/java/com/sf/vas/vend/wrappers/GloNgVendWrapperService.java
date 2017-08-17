@@ -1,13 +1,10 @@
 package com.sf.vas.vend.wrappers;
 
-import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.jms.JMSException;
-
 import com.sf.vas.airtimevend.glo.dto.GloVendInitParams;
 import com.sf.vas.airtimevend.glo.dto.RequestTopupExtraParams;
 import com.sf.vas.airtimevend.glo.dto.RequestTopupParams;
@@ -18,17 +15,14 @@ import com.sf.vas.airtimevend.glo.service.GloService;
 import com.sf.vas.airtimevend.glo.soapartifacts.Amount;
 import com.sf.vas.airtimevend.glo.soapartifacts.ERSWSTopupResponse;
 import com.sf.vas.airtimevend.glo.soapartifacts.Principal;
-import com.sf.vas.airtimevend.glo.soapartifacts.Principal.Accounts;
-import com.sf.vas.airtimevend.glo.soapartifacts.PrincipalAccount;
 import com.sf.vas.airtimevend.glo.soapartifacts.RequestTopupResponse;
-import com.sf.vas.airtimevend.mtn.enums.MtnVtuVendStatusCode;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
-import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
+import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -48,7 +42,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 	private GloService gloService;
 	
 	@Inject
-	private VtuMtnQueryService vtuQueryService;
+	private VasVendQueryService vtuQueryService;
 	
 	@Inject
 	VtuMtnAsyncService asyncService;
@@ -106,7 +100,13 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		String productId = "TOPUP";
 		RequestTopupType requestTopupType = RequestTopupType.AIRTIME;
 		
-		VtuTransactionLog transactionLog = new VtuTransactionLog();
+		VtuTransactionLog transactionLog;
+		
+		if(request.getVtuTransactionLog() != null){
+			transactionLog = request.getVtuTransactionLog();
+		} else {
+			transactionLog = new VtuTransactionLog();
+		}
 		
 		transactionLog.setAmount(request.getAmount());
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
@@ -125,8 +125,12 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
 		
-		vtuQueryService.createImmediately(transactionLog);
- 		
+		if(transactionLog.getPk() != null){
+			vtuQueryService.update(transactionLog);
+		} else {
+			vtuQueryService.createImmediately(transactionLog);
+		}
+		
 		RequestTopupParams params = new RequestTopupParams();
 		
 		params.setAmount(request.getAmount());

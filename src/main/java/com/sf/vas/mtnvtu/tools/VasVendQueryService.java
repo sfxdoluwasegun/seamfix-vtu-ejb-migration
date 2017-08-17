@@ -28,7 +28,7 @@ import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
  *
  */
 @Stateless
-public class VtuMtnQueryService extends QueryService {
+public class VasVendQueryService extends QueryService {
 
 	public String getSettingValue(String name){
 		Settings settings = getSettingsByName(name);

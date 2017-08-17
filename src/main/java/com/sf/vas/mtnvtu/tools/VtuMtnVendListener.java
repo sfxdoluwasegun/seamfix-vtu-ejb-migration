@@ -46,7 +46,7 @@ import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 public class VtuMtnVendListener implements MessageListener {
 
 	@Inject
-	VtuMtnQueryService vtuQueryService;
+	VasVendQueryService vtuQueryService;
 	
 	@Inject
 	VtuMtnService vtuMtnService;

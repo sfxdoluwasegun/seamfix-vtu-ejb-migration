@@ -17,7 +17,7 @@ import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.service.VtuMtnAsyncService;
 import com.sf.vas.mtnvtu.service.VtuMtnService;
-import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
+import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 
 /**
  * @author DAWUZI
@@ -28,7 +28,7 @@ import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
 public class VendService {
 	
 	@Inject
-	VtuMtnQueryService vtuQueryService;
+	VasVendQueryService vtuQueryService;
 	
 	@Inject
 	VtuMtnService vtuMtnService;

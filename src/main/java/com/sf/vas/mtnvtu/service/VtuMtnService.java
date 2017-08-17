@@ -29,7 +29,7 @@ import com.sf.vas.mtnvtu.enums.ResponseCode;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.enums.VtuVendStatusCode;
 import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
-import com.sf.vas.mtnvtu.tools.VtuMtnQueryService;
+import com.sf.vas.mtnvtu.tools.VasVendQueryService;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferStatusResponse;
@@ -47,7 +47,7 @@ import com.sf.vas.vtu.IAirtimeTransferHandler;
 public class VtuMtnService {
 
 	@Inject
-	VtuMtnQueryService vtuQueryService;
+	VasVendQueryService vtuQueryService;
 	
 	@Inject
 	VtuMtnJmsManager jmsManager;
@@ -232,10 +232,16 @@ public class VtuMtnService {
 		}
 		
 		String originMsisdn = vtuQueryService.getSettingValue(VtuMtnSetting.VTU_ORIGINATOR_MSISDN);
+		
+		
 
 		for (VtuTransactionLog vtuTransactionLog : failedTransactions) {
 			
 			vtuTransactionLog.setVtuStatus(Status.UNKNOWN); 
+			
+			
+			
+			
 			vtuTransactionLog.setOriginatorMsisdn(originMsisdn); // we need to always use the updated originator msisdn
 			
 			vtuQueryService.update(vtuTransactionLog);

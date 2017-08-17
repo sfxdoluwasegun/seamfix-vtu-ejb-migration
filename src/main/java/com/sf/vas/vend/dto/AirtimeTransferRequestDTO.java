@@ -10,6 +10,7 @@ import com.sf.vas.atjpa.entities.NetworkCarrier;
 import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
+import com.sf.vas.atjpa.entities.VtuTransactionLog;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -39,5 +40,7 @@ public class AirtimeTransferRequestDTO implements Serializable {
 	private String callbackUrl;
 
 	private TopupHistory topupHistory;
+	
+	private VtuTransactionLog vtuTransactionLog;
 
 }
