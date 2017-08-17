@@ -214,28 +214,4 @@ public class VtuVasService {
 		return getNewCycleInfo(profile);
 	}
 	
-	//moved this method to this class in order to access getTariffTypeId method which is private to this class - please confirm
-	public VtuTransactionLog createVtuLog(TopupHistory topupHistory,TopUpProfile topUpProfile,Subscriber subscriber,NetworkCarrier networkCarrier) {
-		
-		VtuTransactionLog transactionLog = new VtuTransactionLog();
-		
-		String originMsisdn = vtuQueryService.getSettingValue(VasVendSetting.VTU_ORIGINATOR_MSISDN);
-		String serviceProviderId = vtuQueryService.getSettingValue(VasVendSetting.VTU_SERVICE_PROVIDER_ID);
-		
-		transactionLog.setAmount(topupHistory.getAmount());
-		transactionLog.setCallBackUrl(null); //please confirm this
-		transactionLog.setOriginatorMsisdn(originMsisdn); //please confirm this
-		transactionLog.setDestinationMsisdn(topupHistory.getMsisdn());
-		transactionLog.setSender(subscriber);
-		transactionLog.setTariffTypeId(getTariffTypeId(topupHistory.getAmount()));//get tariff id please confirm this
-		transactionLog.setTopupHistory(topupHistory); 
-		transactionLog.setTopUpProfile(topUpProfile); 
-		transactionLog.setServiceProviderId(serviceProviderId);
-		transactionLog.setNetworkCarrier(networkCarrier);
-		transactionLog.setVtuStatus(Status.PENDING);
-		
-		vtuQueryService.createImmediately(transactionLog);
-
-		return transactionLog;
-	}
 }
