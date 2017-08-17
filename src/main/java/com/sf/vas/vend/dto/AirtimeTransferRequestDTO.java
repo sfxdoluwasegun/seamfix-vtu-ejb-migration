@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.dto;
+package com.sf.vas.vend.dto;
 
 import java.io.Serializable;
 import java.math.BigDecimal;

@@ -3,8 +3,8 @@ package com.sf.vas.vtu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sf.vas.mtnvtu.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
+import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
 
 /**
  * @author DAWUZI

@@ -13,7 +13,6 @@ import com.sf.vas.airtimevend.mtn.dto.VendResponseDto;
 import com.sf.vas.airtimevend.mtn.service.VtuMtnService;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.mtnvtu.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.mtnvtu.enums.ResponseCode;
 import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
 import com.sf.vas.mtnvtu.tools.VtuMtnJmsManager;
@@ -22,6 +21,7 @@ import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
+import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.vtu.IAirtimeTransferHandler;
 
 /**
