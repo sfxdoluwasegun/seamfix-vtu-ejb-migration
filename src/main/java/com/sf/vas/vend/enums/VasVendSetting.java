@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.enums;
+package com.sf.vas.vend.enums;
 
 import com.sf.vas.atjpa.enums.SettingsType;
 import com.sf.vas.dsl.contracts.ISettingInfo;
@@ -10,7 +10,7 @@ import com.sf.vas.dsl.contracts.ISettingInfo;
  * @author dawuzi
  *
  */
-public enum VtuMtnSetting implements ISettingInfo {
+public enum VasVendSetting implements ISettingInfo {
 
     VTU_ORIGINATOR_MSISDN("2348068735763", "Airtime Pool Msisdn"),
     VTU_SERVICE_URL("http://41.206.4.75:8083/axis2/services/HostIFService", "This is the URL to the VTU service"),
@@ -23,9 +23,14 @@ public enum VtuMtnSetting implements ISettingInfo {
 //    SSL_TRUST_STORE_PASSWORD("jgX5oP9F8u7PMWNNeBhkug==", "javax.net.ssl.trustStorePassword value"), // plain value = "test" with defaultSecurityKey
     VTU_FAILED_MAX_RETRIAL_ATTEMPTS("3", "Maximum retrial attempts for failed vtu transactions"),
     
+    GLO_NG_SERVICE_URL("http://41.203.65.11:8913/topupservice/service", "This is the URL to the glo topup service"),
+    GLO_NG_SERVICE_PASSWORD("dX0fvhZ8Ws7I3CUsFXNXIQ==", "This is the password to the glo topup service"),
+    GLO_NG_SENDER_PRINCIPAL_ID("WEB7056670256", "The principal id of the sender reseller. Usually in the format WEB<vending-msisdn> eg WEB7056670256"),    
+    GLO_NG_SENDER_PRINCIPAL_USER_ID("9900", "This defines which user made the topup"),
+
     ;
 
-	VtuMtnSetting(String defaultValue, String defaultDescription) {
+	VasVendSetting(String defaultValue, String defaultDescription) {
         this.defaultValue = defaultValue;
         this.defaultDescription = defaultDescription;
     }
