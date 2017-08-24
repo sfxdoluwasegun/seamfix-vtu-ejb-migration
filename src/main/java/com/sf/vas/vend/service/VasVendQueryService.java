@@ -15,10 +15,12 @@ import javax.persistence.metamodel.SingularAttribute;
 
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo_;
+import com.sf.vas.atjpa.entities.NetworkCarrier_;
 import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.TopUpProfile_;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.entities.VtuTransactionLog_;
+import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.SettingsType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.parent.JEntity;
@@ -150,4 +152,19 @@ public class VasVendQueryService extends QueryService {
 
 		return null;
 	}
+	
+	public NetworkCarrierType getNetworkCarrierTypeByVtuTxnLog(Long vtuTransactionLogPk){
+		
+		CriteriaQuery<NetworkCarrierType> criteriaQuery = criteriaBuilder.createQuery(NetworkCarrierType.class);
+		Root<VtuTransactionLog> root = criteriaQuery.from(VtuTransactionLog.class);
+
+		criteriaQuery.select(root.get(VtuTransactionLog_.networkCarrier).get(NetworkCarrier_.type));
+		criteriaQuery.where(
+				criteriaBuilder.equal(root.get(VtuTransactionLog_.pk), vtuTransactionLogPk),
+				criteriaBuilder.equal(root.get(VtuTransactionLog_.deleted), false)
+				);
+
+		return getSafeSingleResult(criteriaQuery);
+	}
+	
 }
