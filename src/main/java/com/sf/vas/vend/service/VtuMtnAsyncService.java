@@ -169,8 +169,6 @@ public class VtuMtnAsyncService {
 		
 		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
 		
-//		transactionType = TransactionType.AUTO;
-		
 		NetworkCarrierType networkCarrierType = queryService.getNetworkCarrierTypeByVtuTxnLog(transactionLog.getPk());
 		
 		if(networkCarrierType == null){
