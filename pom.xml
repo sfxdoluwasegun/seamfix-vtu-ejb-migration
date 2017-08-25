@@ -4,7 +4,7 @@
 
     <groupId>com.sf.vas</groupId>
     <artifactId>mtn-vtu-integration</artifactId>
-    <version>0.0.6-SNAPSHOT</version>
+    <version>0.0.6-final</version>
     <packaging>ejb</packaging>
 
     <name>mtn-vtu-integration</name>
@@ -24,7 +24,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>vas-utils</artifactId>
-			<version>0.0.10-final</version>
+			<version>0.0.11-final</version>
         </dependency>
         <dependency>
 			<groupId>org.projectlombok</groupId>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>atopup-jpa</artifactId>
-			<version>0.1.18-SNAPSHOT</version>
+			<version>0.1.18-final</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.jms</groupId>
@@ -52,17 +52,17 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>mtn-sms</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0-final</version>
         </dependency>
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>autotopup-dsl</artifactId>
-		    <version>0.0.4-SNAPSHOT</version>
+		    <version>0.0.4-final</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>airtime-vend</artifactId>
-		    <version>0.0.1-SNAPSHOT</version>
+		    <version>0.0.1-final</version>
 		</dependency>
     </dependencies>
 	<distributionManagement>
