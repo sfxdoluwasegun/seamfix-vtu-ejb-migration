@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.service;
+package com.sf.vas.vend.service;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +13,10 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sf.sms.dto.SmsRequestDTO;
 import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.mtnsms.service.SmsMtnService;
 import com.sf.vas.utils.enums.SmsProps;
@@ -31,6 +33,9 @@ public class VtuMtnAsyncService {
 	
 	@Inject
 	SmsMtnService smsMtnService;
+	
+	@Inject
+	VasVendQueryService queryService;
 	
 	@Asynchronous
 	public void sendSuccessfulAirtimeTransferSms(VtuTransactionLog transactionLog){
@@ -61,36 +66,42 @@ public class VtuMtnAsyncService {
 		
 		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
 		
+		NetworkCarrierType networkCarrierType = queryService.getNetworkCarrierTypeByVtuTxnLog(transactionLog.getPk());
+		
+		if(networkCarrierType == null){
+			networkCarrierType = NetworkCarrierType.MTN_NG;
+		}
+		
 		switch (transactionType) {
 		
 		case AUTO:
-			sendSms(SmsProps.AUTO_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.AUTO_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			if(!sameUser){
-				sendSms(SmsProps.AUTO_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params);
+				sendSms(SmsProps.AUTO_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params, networkCarrierType);
 			}
 			break;
 		case ACTIVATION:
 			
 			break;
 		case INSTANT:
-			sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			if(!sameUser){
-				sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params);
+				sendSms(SmsProps.INSTANT_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params, networkCarrierType);
 			}
 			break;
 		case SIGNUP_BONUS:
-			sendSms(SmsProps.BONUS_AIRTIME_SUCCESS, subscriberMsisdn, params);
+			sendSms(SmsProps.BONUS_AIRTIME_SUCCESS, subscriberMsisdn, params, networkCarrierType);
 			break;
 			
 		case SCHEDULED:
-			sendSms(SmsProps.SCHEDULED_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.SCHEDULED_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			if(!sameUser){
-				sendSms(SmsProps.SCHEDULED_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params);
+				sendSms(SmsProps.SCHEDULED_TOPUP_SUCCESSFUL_RECIPIENT, recipientMsisdn, params, networkCarrierType);
 			}
 			break;
 			
 		case REFERRAL:
-			sendSms(SmsProps.REFERRAL_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.REFERRAL_TOPUP_SUCCESSFUL_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			break;
 			
 		default:
@@ -105,17 +116,24 @@ public class VtuMtnAsyncService {
 	 * @param value
 	 */
 	@Asynchronous
-	public void sendSms(SmsProps smsProps, String msisdn, String param, String value) {
+	public void sendSms(SmsProps smsProps, String msisdn, String param, String value, NetworkCarrierType networkCarrierType) {
 		try {
-			smsMtnService.sendSms(smsProps, msisdn, param, value);
+			smsMtnService.sendSms(smsProps, msisdn, param, value, networkCarrierType);
 		} catch (VasException e) {
 			log.error("VasException", e);
 		}
 	}
 	@Asynchronous
-	public void sendSms(SmsProps smsProps, String msisdn, Map<String, Object> params) {
+	public void sendSms(SmsProps smsProps, String msisdn, Map<String, Object> params, NetworkCarrierType networkCarrierType) {
 		try {
-			smsMtnService.sendSms(smsProps, msisdn, params);
+			SmsRequestDTO smsRequestDTO = new SmsRequestDTO();
+			
+			smsRequestDTO.setMsisdn(msisdn);
+			smsRequestDTO.setNetworkCarrierType(networkCarrierType);
+			smsRequestDTO.setParams(params);
+			smsRequestDTO.setSmsProps(smsProps);
+			
+			smsMtnService.sendSms(smsRequestDTO);
 		} catch (VasException e) {
 			log.error("VasException", e);
 		}
@@ -151,32 +169,36 @@ public class VtuMtnAsyncService {
 		
 		TransactionType transactionType = transactionLog.getTopupHistory().getTransactionType();
 		
-		transactionType = TransactionType.AUTO;
+		NetworkCarrierType networkCarrierType = queryService.getNetworkCarrierTypeByVtuTxnLog(transactionLog.getPk());
+		
+		if(networkCarrierType == null){
+			networkCarrierType = NetworkCarrierType.MTN_NG;
+		}
 		
 		switch (transactionType) {
 		
 		case AUTO:
-			sendSms(SmsProps.AUTO_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.AUTO_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			break;
 		case ACTIVATION:
 			
 			break;
 		case INSTANT:
-			sendSms(SmsProps.INSTANT_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.INSTANT_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			break;
 		case SIGNUP_BONUS:
-			sendSms(SmsProps.BONUS_AIRTIME_ERROR, subscriberMsisdn, params);
+			sendSms(SmsProps.BONUS_AIRTIME_ERROR, subscriberMsisdn, params, networkCarrierType);
 			break;
 			
 		case SCHEDULED:
-			sendSms(SmsProps.SCHEDULED_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.SCHEDULED_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			if(!sameUser){
-				sendSms(SmsProps.SCHEDULED_TOPUP_FAILED_RECIPIENT, recipientMsisdn, params);
+				sendSms(SmsProps.SCHEDULED_TOPUP_FAILED_RECIPIENT, recipientMsisdn, params, networkCarrierType);
 			}
 			break;
 			
 		case REFERRAL:
-			sendSms(SmsProps.REFERRAL_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params);
+			sendSms(SmsProps.REFERRAL_TOPUP_FAILED_SUBSCRIBER, subscriberMsisdn, params, networkCarrierType);
 			break;
 
 		default:

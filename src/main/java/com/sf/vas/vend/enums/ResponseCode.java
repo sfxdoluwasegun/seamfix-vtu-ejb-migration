@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.enums;
+package com.sf.vas.vend.enums;
 
 /**
  * @author dawuzi

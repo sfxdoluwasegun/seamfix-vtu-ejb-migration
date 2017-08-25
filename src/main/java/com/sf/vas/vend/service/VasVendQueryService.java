@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.sf.vas.mtnvtu.tools;
+package com.sf.vas.vend.service;
 
 import java.util.List;
 
@@ -9,26 +9,30 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SingularAttribute;
 
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo_;
+import com.sf.vas.atjpa.entities.NetworkCarrier_;
 import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.TopUpProfile_;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.entities.VtuTransactionLog_;
+import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.SettingsType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.parent.JEntity;
 import com.sf.vas.atjpa.tools.QueryService;
-import com.sf.vas.mtnvtu.enums.VtuMtnSetting;
+import com.sf.vas.vend.enums.VasVendSetting;
 
 /**
  * @author dawuzi
  *
  */
 @Stateless
-public class VtuMtnQueryService extends QueryService {
+public class VasVendQueryService extends QueryService {
 
 	public String getSettingValue(String name){
 		Settings settings = getSettingsByName(name);
@@ -55,7 +59,7 @@ public class VtuMtnQueryService extends QueryService {
 		}
 	}
 	
-	public String getSettingValue(VtuMtnSetting vtuMtnSetting){
+	public String getSettingValue(VasVendSetting vtuMtnSetting){
 		
 		Settings settings = getSettingsByName(vtuMtnSetting.name()); 
 		
@@ -122,4 +126,45 @@ public class VtuMtnQueryService extends QueryService {
 		
 		return entityManager.createQuery(criteriaQuery).getResultList();
 	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <T> T getByPkWithEagerLoading(Class<T> clazz, 
+			long pk, SingularAttribute... attributes){
+
+		CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(clazz);
+		Root<T> root = criteriaQuery.from(clazz);
+
+		for (SingularAttribute attribute : attributes){
+			root.fetch(attribute, JoinType.LEFT);
+		}
+
+		criteriaQuery.select(root);
+		criteriaQuery.where(criteriaBuilder.and(
+				criteriaBuilder.equal(root.get("pk"), pk),
+				criteriaBuilder.equal(root.get("deleted"), false)
+				));
+
+		try {
+			return entityManager.createQuery(criteriaQuery).getSingleResult();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+	
+	public NetworkCarrierType getNetworkCarrierTypeByVtuTxnLog(Long vtuTransactionLogPk){
+		
+		CriteriaQuery<NetworkCarrierType> criteriaQuery = criteriaBuilder.createQuery(NetworkCarrierType.class);
+		Root<VtuTransactionLog> root = criteriaQuery.from(VtuTransactionLog.class);
+
+		criteriaQuery.select(root.get(VtuTransactionLog_.networkCarrier).get(NetworkCarrier_.type));
+		criteriaQuery.where(
+				criteriaBuilder.equal(root.get(VtuTransactionLog_.pk), vtuTransactionLogPk),
+				criteriaBuilder.equal(root.get(VtuTransactionLog_.deleted), false)
+				);
+
+		return getSafeSingleResult(criteriaQuery);
+	}
+	
 }
