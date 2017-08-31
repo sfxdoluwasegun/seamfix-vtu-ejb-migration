@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +86,7 @@ public class VendService {
 			log.error("Error sending sms", e);
 		}
 		
+		notifyService(transactionLog.getCallBackUrl());
 	}
 	
 	public void handleFailedVending(VtuTransactionLog transactionLog){
@@ -109,6 +113,7 @@ public class VendService {
 
 		log.info("handleFailedVending transactionLog.getVtuStatus() : "+transactionLog.getVtuStatus());
 		
+		notifyService(transactionLog.getCallBackUrl());
 	}
 	
 	/**
@@ -141,5 +146,35 @@ public class VendService {
 		} catch (Exception e) {
 			log.error("Error sending sms", e);
 		}
+	}
+	
+	public boolean notifyService(String url){
+		
+		if(url == null || url.trim().isEmpty()){
+			log.info("url is null or empty : -"+url+"-");
+			return false;
+		}
+		
+		try {
+			
+			log.info("Sending signal to : "+url);
+			
+			Client client = ClientBuilder.newClient();
+			
+			Response response = client.target(url).request().get();
+			
+			if(response == null){
+				log.info("response is null");
+				return false;
+			} else {
+				log.info("response status : "+response.getStatus()); 
+				return (Response.Status.OK.getStatusCode() == response.getStatus());
+			}
+			
+		} catch (Exception e) {
+			log.error(" XXXXXXXXXXX \nXXXXXXXXXXXXXXXXXXXXXX  Error notifying "+url+" message : "+e.getMessage()+" XXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXX");
+		}
+		
+		return false;
 	}
 }
