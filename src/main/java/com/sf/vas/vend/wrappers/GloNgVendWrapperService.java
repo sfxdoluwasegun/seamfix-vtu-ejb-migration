@@ -54,6 +54,9 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 	
 	private RequestTopupExtraParams defaultExtraParams = new RequestTopupExtraParams();
 	
+	private final String DEFAULT_ORIGINATOR_MSISDN = "DEFAULT";
+	private final String DEFAULT_NOT_APPLICABLE = "NA";
+	
 	@PostConstruct
 	private void init(){
 		
@@ -91,11 +94,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		GloVendInitParams initParams = gloService.getInitParams();
 		
 		String senderPrincipalId = initParams.getSenderPrincipalId(); // eg WEB7056670256
-//		String senderPrincipalUserId = initParams.getSenderPrincipalUserId();
 		
-//		String channel = defaultExtraParams.getChannel();
-//		String clientId = defaultExtraParams.getClientId();
-//		String topupPrincipalIdType = defaultExtraParams.getTopupPrincipalIdType();
 		String productId = "TOPUP";
 		RequestTopupType requestTopupType = RequestTopupType.AIRTIME;
 		
@@ -110,17 +109,16 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setAmount(request.getAmount());
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
 		transactionLog.setClientReference(ref);
-		transactionLog.setOriginatorMsisdn("DEFAULT");
+		transactionLog.setOriginatorMsisdn(DEFAULT_ORIGINATOR_MSISDN);
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
 		transactionLog.setProductId(productId);
 		transactionLog.setSender(request.getSubscriber());
 		transactionLog.setSenderPrincipalId(senderPrincipalId); 
-		transactionLog.setTariffTypeId("NA");
+		transactionLog.setTariffTypeId(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setTopupHistory(request.getTopupHistory()); 
 		transactionLog.setTopUpProfile(request.getTopUpProfile()); 
 		transactionLog.setTopupType(requestTopupType.getValue());
-//		transactionLog.setSeqTxRefId(clientId);
-		transactionLog.setServiceProviderId("NA");
+		transactionLog.setServiceProviderId(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
 		
@@ -207,7 +205,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		String responseCode = String.valueOf(erswsTopupResponse.getResultCode());
 		String resultDescription = erswsTopupResponse.getResultDescription();
 		String balance = null;
-		String msisdn = null;
+		String msisdn = DEFAULT_ORIGINATOR_MSISDN;
 		
 		Principal senderPrincipal = erswsTopupResponse.getSenderPrincipal();
 		
@@ -223,17 +221,15 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 				}
 			}
 			
-			msisdn = senderPrincipal.getMsisdn();
+			if(senderPrincipal.getMsisdn() != null){
+				msisdn = senderPrincipal.getMsisdn();
+			}
 		}
 		
 		transactionLog.setStatusId(responseCode);
 		transactionLog.setTxRefId(ersReference);
-//		transactionLog.setSeqStatus(vendResponse.getSeqstatus());
-//		transactionLog.setSeqTxRefId(msisdn);
-//		transactionLog.setLastSeq(msisdn);
 		transactionLog.setOrigBalance(balance);
 		transactionLog.setOriginatorMsisdn(msisdn);
-//		transactionLog.setDestBalance(vendResponse.getDestBalance());
 		transactionLog.setResponseCode(responseCode);
 		transactionLog.setResponseMessage(resultDescription);
 	}
