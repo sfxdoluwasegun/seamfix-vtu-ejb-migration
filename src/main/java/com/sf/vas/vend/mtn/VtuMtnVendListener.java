@@ -135,6 +135,8 @@ public class VtuMtnVendListener implements MessageListener {
 		vendDto.setSequence(currentSequence);
 		vendDto.setTariffTypeId(transactionLog.getTariffTypeId());
 		
+		log.info("vendDto : "+vendDto);
+		
 		VendResponseDto vendResponseDto = mtnNgVtuWrapperService.sendVendRequest(vendDto);
 		
 		currentSequence = vendResponseDto.getUsedSequence();
