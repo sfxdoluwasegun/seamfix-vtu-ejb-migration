@@ -81,7 +81,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		initParams.setServiceUrl(serviceUrl);
 		
 		gloService = new GloService(initParams);
-	}	
+	}
 	
 	@Override
 	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request) {
@@ -117,6 +117,9 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setServiceProviderId(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
+		
+		if (request.getRoleType() != null)
+			transactionLog.setRoleType(request.getRoleType());
 		
 		if(transactionLog.getPk() != null){
 			vtuQueryService.update(transactionLog);
@@ -173,7 +176,6 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		response.setTransactionId(transactionLog.getPk());
 		
 		return response;
-		
 	}
 
 	private String getDisplayFailureReason(GloServiceResponseCode code) {
