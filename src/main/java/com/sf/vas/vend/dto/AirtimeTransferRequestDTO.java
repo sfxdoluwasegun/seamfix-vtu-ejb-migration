@@ -11,6 +11,7 @@ import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.enums.RoleTypes;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -42,5 +43,7 @@ public class AirtimeTransferRequestDTO implements Serializable {
 	private TopupHistory topupHistory;
 	
 	private VtuTransactionLog vtuTransactionLog;
+	
+	private RoleTypes roleType ;
 
 }

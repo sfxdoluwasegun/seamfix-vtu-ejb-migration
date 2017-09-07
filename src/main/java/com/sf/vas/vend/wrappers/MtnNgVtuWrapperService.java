@@ -99,6 +99,9 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
 		
+		if (request.getRoleType() != null)
+			transactionLog.setRoleType(request.getRoleType());
+		
 		if(transactionLog.getPk() != null){
 			vtuQueryService.update(transactionLog);
 		} else {
