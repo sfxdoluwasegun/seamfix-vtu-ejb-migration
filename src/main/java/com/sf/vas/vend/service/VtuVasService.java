@@ -29,6 +29,7 @@ import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.vend.enums.ResponseCode;
+import com.sf.vas.vend.wrappers.CreditSwitchWrapperService;
 import com.sf.vas.vend.wrappers.GloNgVendWrapperService;
 import com.sf.vas.vend.wrappers.IAirtimeTransferHandler;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
@@ -49,7 +50,10 @@ public class VtuVasService {
 
 	@Inject
 	GloNgVendWrapperService gloNgVendWrapperService;
-
+	
+	@Inject
+	CreditSwitchWrapperService creditSwitchWrapperService;
+	
 	private Logger log = LoggerFactory.getLogger(getClass());
 
 	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request){
@@ -96,6 +100,9 @@ public class VtuVasService {
 			return mtnNgVtuWrapperService;
 		case GLO_NG:
 			return gloNgVendWrapperService;
+		case AIRTEL_NG:
+		case NINE_MOBILE:
+			return creditSwitchWrapperService;
 
 		default:
 			return mtnNgVtuWrapperService;
