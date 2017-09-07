@@ -199,6 +199,12 @@ public class CreditSwitchWrapperService extends IAirtimeTransferHandler {
 	}
 
 	private void setResponse(VtuTransactionLog transactionLog, CreditSwitchVendResponseDto creditSwitchVendResponseDto) {
+		
+		if(creditSwitchVendResponseDto == null){
+			log.warn("creditSwitchVendResponseDto is null");
+			return;
+		}
+		
 		RestServiceResponse<CreditSwitchVendResponse> restServiceResponse = creditSwitchVendResponseDto.getRestServiceResponse();
 		
 		if(restServiceResponse != null && restServiceResponse.getBody() != null){
