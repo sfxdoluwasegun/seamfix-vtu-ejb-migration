@@ -1,7 +1,10 @@
 package com.sf.vas.vend.service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -11,13 +14,17 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sf.vas.atjpa.entities.ApiTxnLogs;
+import com.sf.vas.atjpa.entities.ApiTxnLogs_;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
+import com.sf.vas.atjpa.enums.RoleTypes;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.vend.enums.VasVendSetting;
+import com.sf.vas.vend.restclient.ResellerVendNotification;
 
 /**
  * @author DAWUZI
@@ -35,6 +42,9 @@ public class VendService {
 	
 	@Inject
 	VtuMtnAsyncService asyncService;
+	
+	@Inject
+	ResellerVendNotification resellerVendNotification ;
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -87,8 +97,37 @@ public class VendService {
 		}
 		
 		notifyService(transactionLog.getCallBackUrl());
+		
+		if (transactionLog.getRoleType() != null && transactionLog.getRoleType().equals(RoleTypes.RESELLER))
+			doResellerVendNotification(Status.SUCCESSFUL, Status.SUCCESSFUL.name(), topupHistory, topUpProfile);
 	}
 	
+	/**
+	 * Handle re-seller air time vend notification.
+	 * 
+	 * @param status transaction status
+	 * @param message transaction status description
+	 * @param topupHistory transaction record
+	 * @param topUpProfile end user auto top-up profile
+	 */
+	@Asynchronous
+	private void doResellerVendNotification(Status status, String message, TopupHistory topupHistory, TopUpProfile topUpProfile) {
+		// TODO Auto-generated method stub
+		
+		ApiTxnLogs apiTxnLogs = vtuQueryService.getApiTransactionLogByReferenceNo(topupHistory.getReferenceNo(), ApiTxnLogs_.subscriber);
+		if (apiTxnLogs == null)
+			return;
+		
+		resellerVendNotification.resellerVendNotificationClient(apiTxnLogs.getSubscriber(), topUpProfile, topupHistory, status, message);
+		
+		apiTxnLogs.setAmountDebited(topupHistory.getAmount());
+		apiTxnLogs.setMessage(message);
+		apiTxnLogs.setStatus(status);
+		apiTxnLogs.setVendorFeedBackTime(Timestamp.valueOf(LocalDateTime.now()));
+		
+		vtuQueryService.update(apiTxnLogs);
+	}
+
 	public void handleFailedVending(VtuTransactionLog transactionLog){
 		
 		TopupHistory topupHistory = transactionLog.getTopupHistory(); 
@@ -114,6 +153,9 @@ public class VendService {
 		log.info("handleFailedVending transactionLog.getVtuStatus() : "+transactionLog.getVtuStatus());
 		
 		notifyService(transactionLog.getCallBackUrl());
+		
+		if (transactionLog.getRoleType() != null && transactionLog.getRoleType().equals(RoleTypes.RESELLER))
+			doResellerVendNotification(Status.FAILED, "server unable to process request at the moment", topupHistory, transactionLog.getTopUpProfile());
 	}
 	
 	/**
