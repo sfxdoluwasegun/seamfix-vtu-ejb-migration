@@ -3,6 +3,7 @@
  */
 package com.sf.vas.vend.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.ejb.Stateless;
@@ -25,6 +26,7 @@ import com.sf.vas.atjpa.enums.SettingsType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.parent.JEntity;
 import com.sf.vas.atjpa.tools.QueryService;
+import com.sf.vas.dsl.contracts.ISettingInfo;
 import com.sf.vas.vend.enums.VasVendSetting;
 
 /**
@@ -74,6 +76,67 @@ public class VasVendQueryService extends QueryService {
 		} else {
 			return settings.getValue();
 		}
+	}
+	
+	public long getSettingValueLong(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		long value;
+		try {
+			value = Long.parseLong(settingValue.trim());
+		} catch (Exception e) {
+			value = Long.parseLong(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public int getSettingValueInt(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		int value;
+		try {
+			value = Integer.parseInt(settingValue.trim());
+		} catch (Exception e) {
+			value = Integer.parseInt(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public float getSettingValueFloat(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		float value;
+		try {
+			value = Float.parseFloat(settingValue.trim());
+		} catch (Exception e) {
+			value = Float.parseFloat(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public double getSettingValueDouble(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		double value;
+		try {
+			value = Double.parseDouble(settingValue.trim());
+		} catch (Exception e) {
+			value = Double.parseDouble(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public BigDecimal getSettingValueBigDecimal(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		BigDecimal value;
+		try {
+			value = new BigDecimal(settingValue);
+		} catch (Exception e) {
+			value = new BigDecimal(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public boolean getSettingValueBoolean(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		boolean value;
+		try {
+			value = Boolean.parseBoolean(settingValue.trim());
+		} catch (Exception e) {
+			value = Boolean.parseBoolean(settingInfo.getDefaultValue());
+		}
+		return value;
 	}
 
 	/**

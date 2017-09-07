@@ -28,7 +28,6 @@ import com.sf.vas.vend.enums.ResponseCode;
 import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.service.VasVendQueryService;
 import com.sf.vas.vend.service.VendService;
-import com.sf.vas.vend.service.VtuMtnAsyncService;
 
 /**
  * @author DAWUZI
@@ -42,9 +41,6 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 	
 	@Inject
 	private VasVendQueryService vtuQueryService;
-	
-	@Inject
-	VtuMtnAsyncService asyncService;
 	
 	@Inject
 	VendService vendService;
