@@ -3,6 +3,7 @@ package com.sf.vas.vend.restclient;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -24,6 +25,7 @@ import com.sf.vas.atjpa.enums.ApiTxnTypes;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.vend.service.VasVendQueryService;
 
+@Stateless
 public class ResellerVendNotification {
 	
 	private Logger log = Logger.getLogger(getClass());
