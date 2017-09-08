@@ -28,6 +28,11 @@ public enum VasVendSetting implements ISettingInfo {
     GLO_NG_SENDER_PRINCIPAL_ID("WEB7056670256", "The principal id of the sender reseller. Usually in the format WEB<vending-msisdn> eg WEB7056670256"),    
     GLO_NG_SENDER_PRINCIPAL_USER_ID("9900", "This defines which user made the topup"),
 
+    CREDIT_SWITCH_LOGIN_ID("16412", "Credit switch login ID"),
+    CREDIT_SWITCH_PRIVATE_KEY("G3BZ5PFLRE2QGOr0xr7UOA==", "Credit switch private key"),
+    CREDIT_SWITCH_PUBLIC_KEY("Ly824mfwOmF5d9DTYZtNzg==", "Credit switch public key"),
+    
+    
     ;
 
 	VasVendSetting(String defaultValue, String defaultDescription) {

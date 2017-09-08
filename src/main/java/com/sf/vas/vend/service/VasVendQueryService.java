@@ -3,20 +3,25 @@
  */
 package com.sf.vas.vend.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
 
+import com.sf.vas.atjpa.entities.ApiTxnLogs;
+import com.sf.vas.atjpa.entities.ApiUserDetails;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo_;
 import com.sf.vas.atjpa.entities.NetworkCarrier_;
 import com.sf.vas.atjpa.entities.Settings;
+import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile_;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.entities.VtuTransactionLog_;
@@ -25,6 +30,8 @@ import com.sf.vas.atjpa.enums.SettingsType;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.parent.JEntity;
 import com.sf.vas.atjpa.tools.QueryService;
+import com.sf.vas.dsl.dao.ApiTxnLogsDao;
+import com.sf.vas.dsl.dao.ApiUserDetailsDao;
 import com.sf.vas.vend.enums.VasVendSetting;
 
 /**
@@ -33,6 +40,12 @@ import com.sf.vas.vend.enums.VasVendSetting;
  */
 @Stateless
 public class VasVendQueryService extends QueryService {
+
+	@Inject
+	private ApiUserDetailsDao apiUserDetailsDao;
+	
+	@Inject
+	private ApiTxnLogsDao apiTxnLogsDao;
 
 	public String getSettingValue(String name){
 		Settings settings = getSettingsByName(name);
@@ -74,6 +87,67 @@ public class VasVendQueryService extends QueryService {
 		} else {
 			return settings.getValue();
 		}
+	}
+	
+	public long getSettingValueLong(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		long value;
+		try {
+			value = Long.parseLong(settingValue.trim());
+		} catch (Exception e) {
+			value = Long.parseLong(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public int getSettingValueInt(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		int value;
+		try {
+			value = Integer.parseInt(settingValue.trim());
+		} catch (Exception e) {
+			value = Integer.parseInt(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public float getSettingValueFloat(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		float value;
+		try {
+			value = Float.parseFloat(settingValue.trim());
+		} catch (Exception e) {
+			value = Float.parseFloat(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public double getSettingValueDouble(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		double value;
+		try {
+			value = Double.parseDouble(settingValue.trim());
+		} catch (Exception e) {
+			value = Double.parseDouble(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public BigDecimal getSettingValueBigDecimal(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		BigDecimal value;
+		try {
+			value = new BigDecimal(settingValue);
+		} catch (Exception e) {
+			value = new BigDecimal(settingInfo.getDefaultValue());
+		}
+		return value;
+	}
+	public boolean getSettingValueBoolean(VasVendSetting settingInfo) {
+		String settingValue = getSettingValue(settingInfo);
+		boolean value;
+		try {
+			value = Boolean.parseBoolean(settingValue.trim());
+		} catch (Exception e) {
+			value = Boolean.parseBoolean(settingInfo.getDefaultValue());
+		}
+		return value;
 	}
 
 	/**
@@ -165,6 +239,21 @@ public class VasVendQueryService extends QueryService {
 				);
 
 		return getSafeSingleResult(criteriaQuery);
+	}
+	
+	public ApiUserDetails getResellerApiDetailBySubscriber(Subscriber subscriber) {
+		// TODO Auto-generated method stub
+		return apiUserDetailsDao.getApiUserDetailsBySubscriber(subscriber);
+	}
+	
+	public ApiTxnLogs getApiTransactionLogByReferenceNo(String referenceNo) {
+		// TODO Auto-generated method stub
+		return apiTxnLogsDao.getApiUserDetailsByReferenceNo(referenceNo);
+	}
+	
+	public ApiTxnLogs getApiTransactionLogByReferenceNo(String referenceNo, @SuppressWarnings("rawtypes") SingularAttribute...attributes) {
+		// TODO Auto-generated method stub
+		return apiTxnLogsDao.getApiUserDetailsByReferenceNo(referenceNo, attributes);
 	}
 	
 }
