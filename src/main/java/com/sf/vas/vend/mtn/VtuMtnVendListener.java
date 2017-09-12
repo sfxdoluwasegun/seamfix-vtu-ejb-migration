@@ -3,12 +3,10 @@
  */
 package com.sf.vas.vend.mtn;
 
-import java.util.concurrent.Future;
-
+import java.net.ConnectException;
 import javax.annotation.PostConstruct;
 import javax.ejb.ActivationConfigProperty;
-import javax.ejb.AsyncResult;
-import javax.ejb.Asynchronous;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.ejb.MessageDriven;
 import javax.inject.Inject;
 import javax.jms.Message;
@@ -22,7 +20,6 @@ import com.sf.vas.airtimevend.mtn.dto.VendDto;
 import com.sf.vas.airtimevend.mtn.dto.VendResponseDto;
 import com.sf.vas.airtimevend.mtn.enums.MtnVtuVendStatusCode;
 import com.sf.vas.airtimevend.mtn.soapartifacts.VendResponse;
-import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
@@ -32,6 +29,7 @@ import com.sf.vas.vend.service.VasVendQueryService;
 import com.sf.vas.vend.service.VendService;
 import com.sf.vas.vend.service.VtuMtnAsyncService;
 import com.sf.vas.vend.service.VtuVasService;
+import com.sf.vas.vend.util.VendUtil;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 
 /**
@@ -66,6 +64,8 @@ public class VtuMtnVendListener implements MessageListener {
 	private long currentSequence = 0L;
 	
 	private Settings vtuCurrentSeqNoSettings;
+	
+	private VendUtil vendUtil = new VendUtil();
 	
 	@PostConstruct
 	private void init(){
@@ -102,7 +102,11 @@ public class VtuMtnVendListener implements MessageListener {
 					topupHistory.setFailureReason("VTU VEND ERROR");
 					topupHistory.setDisplayFailureReason("Oops! An error occured while trying to credit your account. Kindly contact support");
 					
-					vendService.handleFailedVending(vtuTransactionLog);
+					if(vendUtil.isThrowableClassInStrackTrace(e, EJBTransactionRolledbackException.class)){
+						vendService.handleFailedVendingWithNewTransaction(vtuTransactionLog);
+					} else {
+						vendService.handleFailedVending(vtuTransactionLog);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -137,48 +141,67 @@ public class VtuMtnVendListener implements MessageListener {
 		
 		log.info("vendDto : "+vendDto);
 		
-		VendResponseDto vendResponseDto = mtnNgVtuWrapperService.sendVendRequest(vendDto);
+		VendResponseDto vendResponseDto = null;
+		MtnVtuVendStatusCode vendStatusCode = null;
 		
-		currentSequence = vendResponseDto.getUsedSequence();
+		Exception vendException = null;
 		
-		TopupHistory topupHistory = transactionLog.getTopupHistory(); 
-		
-		transactionLog.setSequence(currentSequence);
-		
-		setVendResponse(vendResponseDto, transactionLog);
-		
-		log.info("vendResponse : "+vendResponseDto);
-		
-//		we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
-		vtuQueryService.update(transactionLog);
-		
-		CurrentCycleInfo currentCycleInfo = null;
-		
-		MtnVtuVendStatusCode vendStatusCode = vendResponseDto.getStatusCode();
-		
-		if(vendStatusCode != null && MtnVtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
-			
-//			this should only be updated for successful transaction
-			currentSequence++;
-			
-			vendService.handleSuccessfulVending(transactionLog);
-			
-		} else {
-			
-			if(vendStatusCode != null){
-				topupHistory.setFailureReason("VTU VEND "+vendStatusCode.name());
-			} else {
-				topupHistory.setFailureReason("VTU VEND ERROR");
-			}
-			topupHistory.setDisplayFailureReason(getDisplayFailureReason(vendStatusCode));
-			
-			vendService.handleFailedVending(transactionLog);
+		try {
+			vendResponseDto = mtnNgVtuWrapperService.sendVendRequest(vendDto);
+		} catch (Exception e) {
+			log.error("Error reaching vtu", e);
+			vendException = e;
 		}
 		
-		updateSequenceNumberSetting();
-		
-		if(transactionLog.getCallBackUrl() != null && !transactionLog.getCallBackUrl().trim().isEmpty()){
-			doCallBack(transactionLog);
+		TopupHistory topupHistory = transactionLog.getTopupHistory(); 
+
+		if(vendResponseDto == null){
+			
+			topupHistory.setFailureReason("VTU VEND ERROR");
+			topupHistory.setDisplayFailureReason(getDisplayFailureReason(vendStatusCode));
+			
+			boolean isRollbackCausedException = vendUtil.isThrowableClassInStrackTrace(vendException, EJBTransactionRolledbackException.class);
+			boolean connectionException = vendUtil.isThrowableClassInStrackTrace(vendException, ConnectException.class);
+			
+			if(isRollbackCausedException){
+				vendService.handleFailedVendingWithNewTransaction(transactionLog, connectionException);
+			} else {
+				vendService.handleFailedVending(transactionLog, connectionException);
+			}
+		} else {
+			
+			currentSequence = vendResponseDto.getUsedSequence();
+			
+			transactionLog.setSequence(currentSequence);
+			
+			setVendResponse(vendResponseDto, transactionLog);
+			
+			log.info("vendResponse : "+vendResponseDto);
+			
+//			we update here first once we have gotten a valid response from MTN VTU service. So we can have records even if an exception will be thrown later
+			vtuQueryService.update(transactionLog);
+			
+			vendStatusCode = vendResponseDto.getStatusCode();
+
+			if(vendStatusCode != null && MtnVtuVendStatusCode.SUCCESSFUL.equals(vendStatusCode)){
+				
+//				this should only be updated for successful transaction
+				currentSequence++;
+				
+				vendService.handleSuccessfulVending(transactionLog);
+				
+				updateSequenceNumberSetting();
+			} else {
+				
+				if(vendStatusCode != null){
+					topupHistory.setFailureReason("VTU VEND "+vendStatusCode.name());
+				} else {
+					topupHistory.setFailureReason("VTU VEND ERROR");
+				}
+				topupHistory.setDisplayFailureReason(getDisplayFailureReason(vendStatusCode));
+				
+				vendService.handleFailedVending(transactionLog);
+			}
 		}
 	}
 
@@ -204,22 +227,15 @@ public class VtuMtnVendListener implements MessageListener {
 	}
 
 	/**
-	 * do asynchronously in order not to obstruct further execution
-	 * 
-	 * @param transactionLog
-	 * @param callbackUrl
-	 */
-	@Asynchronous
-	public Future<String> doCallBack(VtuTransactionLog transactionLog) {
-		//TODO invoke the client's url with status 
-		return new AsyncResult<String>("unimplemented");
-	}
-
-	/**
 	 * @param vendResponse
 	 * @param transactionLog
 	 */
 	private void setVendResponse(VendResponseDto vendResponseDto, VtuTransactionLog transactionLog) {
+		
+		if(vendResponseDto.getVendResponse() == null){
+			log.warn("vendResponseDto is null for vtu log : "+transactionLog.getPk());
+			return;
+		}
 		
 		VendResponse vendResponse = vendResponseDto.getVendResponse();
 		

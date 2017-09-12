@@ -56,6 +56,7 @@ public class CreditSwitchWrapperService extends IAirtimeTransferHandler {
 	@PostConstruct
 	private void init(){
 		
+		String initPath = queryService.getSettingValue(VasVendSetting.CREDIT_SWITCH_INIT_PATH);
 		Integer loginId = queryService.getSettingValueInt(VasVendSetting.CREDIT_SWITCH_LOGIN_ID);
 		String encPublicKey = queryService.getSettingValue(VasVendSetting.CREDIT_SWITCH_PUBLIC_KEY);
 		String encPrivateKey = queryService.getSettingValue(VasVendSetting.CREDIT_SWITCH_PRIVATE_KEY);
@@ -76,6 +77,7 @@ public class CreditSwitchWrapperService extends IAirtimeTransferHandler {
 		
 		CreditSwitchInitParams initParams = new CreditSwitchInitParams();
 		
+		initParams.setEndPointInitPath(initPath);
 		initParams.setLoginId(loginId);
 		initParams.setPrivateKey(privateKey);
 		initParams.setPublicKey(publicKey);
@@ -108,13 +110,10 @@ public class CreditSwitchWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setClientReference(reference);
 		transactionLog.setOriginatorMsisdn(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
-//		transactionLog.setProductId(productId);
 		transactionLog.setSender(request.getSubscriber());
-//		transactionLog.setSenderPrincipalId(senderPrincipalId); 
 		transactionLog.setTariffTypeId(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setTopupHistory(request.getTopupHistory()); 
 		transactionLog.setTopUpProfile(request.getTopUpProfile()); 
-//		transactionLog.setTopupType(requestTopupType.getValue());
 		transactionLog.setServiceProviderId(serviceId);
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
