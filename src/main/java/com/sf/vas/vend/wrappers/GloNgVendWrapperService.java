@@ -1,8 +1,10 @@
 package com.sf.vas.vend.wrappers;
 
+import java.net.ConnectException;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import com.sf.vas.airtimevend.glo.dto.GloVendInitParams;
@@ -28,6 +30,7 @@ import com.sf.vas.vend.enums.ResponseCode;
 import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.service.VasVendQueryService;
 import com.sf.vas.vend.service.VendService;
+import com.sf.vas.vend.util.VendUtil;
 
 /**
  * @author DAWUZI
@@ -52,6 +55,8 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 	
 	private final String DEFAULT_ORIGINATOR_MSISDN = "DEFAULT";
 	private final String DEFAULT_NOT_APPLICABLE = "NA";
+	
+	private VendUtil vendUtil = new VendUtil();
 	
 	@PostConstruct
 	private void init(){
@@ -137,37 +142,53 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		params.setTransactionReference(ref);
 		
 		RequestTopupResponseDto requestTopupResponseDto = null;
+		GloServiceResponseCode gloServiceResponseCode = null;
+		
+		Exception vendException = null;
 		
 		try {
 			requestTopupResponseDto = gloService.requestTopup(params, defaultExtraParams);
 		} catch (Exception e) {
 			log.error("error calling glo service", e);
+			vendException = e;
 		}
+		
+		TopupHistory topupHistory = transactionLog.getTopupHistory();
 		
 		setTopupResponse(transactionLog, requestTopupResponseDto);
 		
-		GloServiceResponseCode gloServiceResponseCode = null;
-		
-		if(requestTopupResponseDto != null){
-			gloServiceResponseCode = requestTopupResponseDto.getServiceResponseCode();
-		}
-		
-		log.info("requestTopupResponseDto : "+requestTopupResponseDto);
-		
-		if(gloServiceResponseCode != null && GloServiceResponseCode.SUCCESS.equals(gloServiceResponseCode)){
-			vendService.handleSuccessfulVending(transactionLog);
-		} else {
+		if(requestTopupResponseDto == null){
 			
-			TopupHistory topupHistory = transactionLog.getTopupHistory();
-			
-			if(gloServiceResponseCode != null){
-				topupHistory.setFailureReason("GLO-NG VEND "+gloServiceResponseCode.name());
-			} else {
-				topupHistory.setFailureReason("GLO-NG VEND ERROR");
-			}
+			topupHistory.setFailureReason("GLO-NG VEND ERROR");
 			topupHistory.setDisplayFailureReason(getDisplayFailureReason(gloServiceResponseCode));
 			
-			vendService.handleFailedVending(transactionLog);
+			boolean isRollbackCausedException = vendUtil.isThrowableClassInStrackTrace(vendException, EJBTransactionRolledbackException.class);
+			boolean connectionException = vendUtil.isThrowableClassInStrackTrace(vendException, ConnectException.class);
+			
+			if(isRollbackCausedException){
+				vendService.handleFailedVendingWithNewTransaction(transactionLog, connectionException);
+			} else {
+				vendService.handleFailedVending(transactionLog, connectionException);
+			}
+		} else {
+			
+			gloServiceResponseCode = requestTopupResponseDto.getServiceResponseCode();
+			
+			log.info("requestTopupResponseDto : "+requestTopupResponseDto);
+			
+			if(gloServiceResponseCode != null && GloServiceResponseCode.SUCCESS.equals(gloServiceResponseCode)){
+				vendService.handleSuccessfulVending(transactionLog);
+			} else {
+				
+				if(gloServiceResponseCode != null){
+					topupHistory.setFailureReason("GLO-NG VEND "+gloServiceResponseCode.name());
+				} else {
+					topupHistory.setFailureReason("GLO-NG VEND ERROR");
+				}
+				topupHistory.setDisplayFailureReason(getDisplayFailureReason(gloServiceResponseCode));
+				
+				vendService.handleFailedVending(transactionLog);
+			}
 		}
 		
 		AirtimeTransferResponse response = new AirtimeTransferResponse();

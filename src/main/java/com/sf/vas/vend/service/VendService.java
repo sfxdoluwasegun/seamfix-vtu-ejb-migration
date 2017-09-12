@@ -2,10 +2,13 @@ package com.sf.vas.vend.service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -17,14 +20,17 @@ import org.slf4j.LoggerFactory;
 import com.sf.vas.atjpa.entities.ApiTxnLogs;
 import com.sf.vas.atjpa.entities.ApiTxnLogs_;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
+import com.sf.vas.atjpa.entities.Subscriber;
 import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.RoleTypes;
 import com.sf.vas.atjpa.enums.Status;
 import com.sf.vas.atjpa.enums.TransactionType;
+import com.sf.vas.utils.enums.SmsProps;
 import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.restclient.ResellerVendNotification;
+import com.sf.vas.vend.util.VendUtil;
 
 /**
  * @author DAWUZI
@@ -45,6 +51,8 @@ public class VendService {
 	
 	@Inject
 	ResellerVendNotification resellerVendNotification ;
+	
+	private VendUtil vendUtil = new VendUtil();
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -128,21 +136,50 @@ public class VendService {
 		vtuQueryService.update(apiTxnLogs);
 	}
 
+	public void handleFailedVendingWithNewTransaction(VtuTransactionLog transactionLog){
+		handleFailedVendingWithNewTransaction(transactionLog, false);
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void handleFailedVendingWithNewTransaction(VtuTransactionLog transactionLog, boolean connectionError){
+		log.info("handleFailedVendingWithNewTransaction called for vtu log : "+transactionLog.getPk());
+		handleFailedVending(transactionLog, connectionError);
+	}	
+	
 	public void handleFailedVending(VtuTransactionLog transactionLog){
+		handleFailedVending(transactionLog, false);
+	}
+	
+	public void handleFailedVending(VtuTransactionLog transactionLog, boolean connectionError){
 		
 		TopupHistory topupHistory = transactionLog.getTopupHistory(); 
 		
-		Integer failedCount = transactionLog.getFailedCount();
-		
-		if(failedCount == null){
-			transactionLog.setFailedCount(1);
-		} else {
-			failedCount = failedCount + 1;
+		if(connectionError){
 			
-			transactionLog.setFailedCount(failedCount);
+			long maxNotificationCount = vtuQueryService.getSettingValueLong(VasVendSetting.VTU_MAX_VEND_SERVICE_UNREACHEABLE_NOTIFICATION_COUNT);
+			
+			long countOfNotificationSentToday = getUnreacheableSmsCount(transactionLog.getSender());
+			
+			if(maxNotificationCount > countOfNotificationSentToday){
+				sendVendUnreacheableFailedSms(transactionLog);
+			} else {
+				log.info("maxNotificationCount : "+maxNotificationCount+", countOfNotificationSentToday : "+countOfNotificationSentToday);
+			}
+			
+		} else {
+			
+			Integer failedCount = transactionLog.getFailedCount();
+			
+			if(failedCount == null){
+				transactionLog.setFailedCount(1);
+			} else {
+				failedCount = failedCount + 1;
+				
+				transactionLog.setFailedCount(failedCount);
+			}
+			
+			sendFailedAirtimeTransferSms(transactionLog);
 		}
-		
-		sendFailedAirtimeTransferSms(transactionLog);
 		
 		transactionLog.setVtuStatus(Status.FAILED);
 		topupHistory.setStatus(Status.FAILED);
@@ -156,6 +193,28 @@ public class VendService {
 		
 		if (transactionLog.getRoleType() != null && transactionLog.getRoleType().equals(RoleTypes.RESELLER))
 			doResellerVendNotification(Status.FAILED, "server unable to process request at the moment", topupHistory, transactionLog.getTopUpProfile());
+	}
+	
+	private void sendVendUnreacheableFailedSms(VtuTransactionLog transactionLog) {
+		try {
+			asyncService.sendVendUnreacheableFailedSms(transactionLog);
+		} catch (Exception e) {
+			log.error("Error sendVendUnreacheableFailedSms", e);
+		}
+	}
+
+	private Long getUnreacheableSmsCount(Subscriber subscriber) {
+
+		LocalDate today = LocalDate.now();
+		LocalDate tomorrow = today.plusDays(1L);
+
+		Timestamp start = Timestamp.valueOf(today.atStartOfDay());
+		Timestamp end = Timestamp.valueOf(tomorrow.atStartOfDay());
+
+		Long count = vtuQueryService.getCountSmsLogByTypeMsisdnAndDateRange(SmsProps.VEND_SERVICE_UNREACHEABLE_SUBSCRIBER_MSG.name(), 
+				vendUtil.getSubscriberMsisdn(subscriber), start, end);
+
+		return count != null ? count : 0;
 	}
 	
 	/**
