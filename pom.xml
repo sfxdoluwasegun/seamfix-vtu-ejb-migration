@@ -4,7 +4,7 @@
 
     <groupId>com.sf.vas</groupId>
     <artifactId>mtn-vtu-integration</artifactId>
-    <version>0.0.9-SNAPSHOT</version>
+    <version>0.0.9-final</version>
     <packaging>ejb</packaging>
 
     <name>mtn-vtu-integration</name>
@@ -24,7 +24,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>vas-utils</artifactId>
-			<version>0.0.15-SNAPSHOT</version>
+			<version>0.0.15-final</version>
         </dependency>
         <dependency>
 			<groupId>org.projectlombok</groupId>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>atopup-jpa</artifactId>
-			<version>0.1.21-SNAPSHOT</version>
+			<version>0.1.22-final</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.jms</groupId>
@@ -57,7 +57,7 @@
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>autotopup-dsl</artifactId>
-		    <version>0.0.7-SNAPSHOT</version>
+		    <version>0.0.7-final</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sf.vas</groupId>
