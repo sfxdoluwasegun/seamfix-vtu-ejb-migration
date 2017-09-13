@@ -1,5 +1,6 @@
 package com.sf.vas.vend.restclient;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -52,7 +53,7 @@ public class ResellerVendNotification {
 		String securityToken = DigestUtils.sha512Hex(new StringBuffer(apiUserDetails.getApiKey()).append(apiUserDetails.getPk()).toString());
 		
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("amount", topupHistory.getAmount());
+		jsonObject.addProperty("amount", (topupHistory.getAmount().multiply(BigDecimal.valueOf(100D))).intValue());
 		jsonObject.addProperty("msisdn", topUpProfile.getMsisdn());
 		jsonObject.addProperty("status", status.name());
 		jsonObject.addProperty("message", message);
