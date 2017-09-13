@@ -4,6 +4,7 @@
 package com.sf.vas.vend.service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.ejb.Stateless;
@@ -19,6 +20,7 @@ import com.sf.vas.atjpa.entities.ApiTxnLogs;
 import com.sf.vas.atjpa.entities.ApiUserDetails;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo;
 import com.sf.vas.atjpa.entities.CurrentCycleInfo_;
+import com.sf.vas.atjpa.entities.NetworkCarrier;
 import com.sf.vas.atjpa.entities.NetworkCarrier_;
 import com.sf.vas.atjpa.entities.Settings;
 import com.sf.vas.atjpa.entities.Subscriber;
@@ -32,6 +34,8 @@ import com.sf.vas.atjpa.parent.JEntity;
 import com.sf.vas.atjpa.tools.QueryService;
 import com.sf.vas.dsl.dao.ApiTxnLogsDao;
 import com.sf.vas.dsl.dao.ApiUserDetailsDao;
+import com.sf.vas.dsl.dao.NetworkCarrierDao;
+import com.sf.vas.dsl.dao.SmsLogDao;
 import com.sf.vas.vend.enums.VasVendSetting;
 
 /**
@@ -46,6 +50,12 @@ public class VasVendQueryService extends QueryService {
 	
 	@Inject
 	private ApiTxnLogsDao apiTxnLogsDao;
+
+	@Inject
+	private SmsLogDao smsLogDao;
+	
+	@Inject
+	private NetworkCarrierDao networkCarrierDao;
 
 	public String getSettingValue(String name){
 		Settings settings = getSettingsByName(name);
@@ -242,18 +252,35 @@ public class VasVendQueryService extends QueryService {
 	}
 	
 	public ApiUserDetails getResellerApiDetailBySubscriber(Subscriber subscriber) {
-		// TODO Auto-generated method stub
 		return apiUserDetailsDao.getApiUserDetailsBySubscriber(subscriber);
 	}
 	
 	public ApiTxnLogs getApiTransactionLogByReferenceNo(String referenceNo) {
-		// TODO Auto-generated method stub
 		return apiTxnLogsDao.getApiUserDetailsByReferenceNo(referenceNo);
 	}
 	
 	public ApiTxnLogs getApiTransactionLogByReferenceNo(String referenceNo, @SuppressWarnings("rawtypes") SingularAttribute...attributes) {
-		// TODO Auto-generated method stub
 		return apiTxnLogsDao.getApiUserDetailsByReferenceNo(referenceNo, attributes);
+	}
+	/**
+	 * @param type
+	 * @param msisdn
+	 * @param start
+	 * @param end
+	 * @return
+	 * @see com.sf.vas.dsl.dao.SmsLogDao#getCountSmsLogByTypeMsisdnAndDateRange(java.lang.String, java.lang.String, java.sql.Timestamp, java.sql.Timestamp)
+	 */
+	public Long getCountSmsLogByTypeMsisdnAndDateRange(String type, String msisdn, Timestamp start, Timestamp end) {
+		return smsLogDao.getCountSmsLogByTypeMsisdnAndDateRange(type, msisdn, start, end);
+	}
+
+	/**
+	 * @param subscriber
+	 * @return
+	 * @see com.sf.vas.dsl.dao.NetworkCarrierDao#getSubscriberNetworkCarrier(com.sf.vas.atjpa.entities.Subscriber)
+	 */
+	public NetworkCarrier getSubscriberNetworkCarrier(Subscriber subscriber) {
+		return networkCarrierDao.getSubscriberNetworkCarrier(subscriber);
 	}
 	
 }
