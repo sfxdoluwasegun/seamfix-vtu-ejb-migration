@@ -66,7 +66,7 @@ public class ResellerVendNotification {
 		if (apikey == null)
 			return;
 
-		String securityToken = DigestUtils.sha512Hex(new StringBuffer(apikey).append(apiUserDetails.getPk()).toString());
+		String securityToken = DigestUtils.sha512Hex(new StringBuffer(apikey).append(":").append(apiUserDetails.getPk()).toString());
 
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("amount", (topupHistory.getAmount().multiply(BigDecimal.valueOf(100D))).toBigInteger());
