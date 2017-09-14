@@ -24,15 +24,20 @@ import com.sf.vas.atjpa.entities.TopUpProfile;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.enums.ApiTxnTypes;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.utils.crypto.EncryptionUtil;
+import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.vend.service.VasVendQueryService;
 
 @Stateless
 public class ResellerVendNotification {
-	
+
 	private Logger log = Logger.getLogger(getClass());
-	
+
 	@Inject
 	VasVendQueryService queryService;
+
+	@Inject
+	EncryptionUtil encryptionUtil ;
 
 	/**
 	 * Notify re-seller of air time vend status.
@@ -47,30 +52,41 @@ public class ResellerVendNotification {
 
 		Client client = null;
 		Response response = null;
-		
+
 		ApiUserDetails apiUserDetails = queryService.getResellerApiDetailBySubscriber(subscriber);
-		
-		String securityToken = DigestUtils.sha512Hex(new StringBuffer(apiUserDetails.getApiKey()).append(apiUserDetails.getPk()).toString());
-		
+		String apikey = null;
+
+		try {
+			apikey = encryptionUtil.decrypt(apiUserDetails.getApiKey());
+		} catch (VasException e1) {
+			// TODO Auto-generated catch block
+			log.error("", e1);
+		}
+
+		if (apikey == null)
+			return;
+
+		String securityToken = DigestUtils.sha512Hex(new StringBuffer(apikey).append(apiUserDetails.getPk()).toString());
+
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("amount", (topupHistory.getAmount().multiply(BigDecimal.valueOf(100D))).intValue());
+		jsonObject.addProperty("amount", (topupHistory.getAmount().multiply(BigDecimal.valueOf(100D))).toBigInteger());
 		jsonObject.addProperty("msisdn", topUpProfile.getMsisdn());
 		jsonObject.addProperty("status", status.name());
 		jsonObject.addProperty("message", message);
-		
+
 		try {
 			client = ClientBuilder.newClient();
 			response = client.target(apiUserDetails.getNotificationIp()).path(apiUserDetails.getNotificationEndpoint())
-			.request(MediaType.APPLICATION_JSON)
-			.header("Authorization", "Bearer " + securityToken)
-			.post(Entity.entity(new Gson().toJson(jsonObject), MediaType.APPLICATION_JSON), Response.class);
+					.request(MediaType.APPLICATION_JSON)
+					.header("Authorization", "Bearer " + securityToken)
+					.post(Entity.entity(new Gson().toJson(jsonObject), MediaType.APPLICATION_JSON), Response.class);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			log.error("", e);
 		} finally {
 			if (client != null) client.close();
 		}
-		
+
 		logAPITransaction(response, topupHistory, topUpProfile, subscriber);
 	}
 
@@ -85,7 +101,7 @@ public class ResellerVendNotification {
 	private void logAPITransaction(Response response, TopupHistory topupHistory, TopUpProfile topUpProfile,
 			Subscriber subscriber) {
 		// TODO Auto-generated method stub
-		
+
 		ApiTxnLogs apiTxnLogs = new ApiTxnLogs();
 		apiTxnLogs.setAmount(topupHistory.getAmount());
 		apiTxnLogs.setInvocationTime(Timestamp.valueOf(LocalDateTime.now()));
@@ -94,10 +110,10 @@ public class ResellerVendNotification {
 		apiTxnLogs.setTopupHistory(topupHistory);
 		apiTxnLogs.setTopUpProfile(topUpProfile);
 		apiTxnLogs.setApiTxnTypes(ApiTxnTypes.VEND_NOTIFICATION);
-		
+
 		if (response != null)
 			apiTxnLogs.setHttpStatusCode(response.getStatus());
-		
+
 		try {
 			queryService.create(apiTxnLogs);
 		} catch (Exception e) {
