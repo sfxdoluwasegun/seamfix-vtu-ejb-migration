@@ -4,7 +4,7 @@
 
     <groupId>com.sf.vas</groupId>
     <artifactId>mtn-vtu-integration</artifactId>
-    <version>0.0.10-SNAPSHOT</version>
+    <version>0.0.10-final</version>
     <packaging>ejb</packaging>
 
     <name>mtn-vtu-integration</name>
@@ -52,7 +52,7 @@
         <dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>mtn-sms</artifactId>
-			<version>1.0.4-SNAPSHOT</version>
+			<version>1.0.4-final</version>
         </dependency>
 		<dependency>
 			<groupId>com.sf.vas</groupId>
