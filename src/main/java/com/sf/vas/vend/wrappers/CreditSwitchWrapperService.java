@@ -36,7 +36,7 @@ import com.sf.vas.vend.service.VendService;
  */
 
 @Stateless
-public class CreditSwitchWrapperService extends IAirtimeTransferHandler {
+public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 
 	private CreditSwitchService creditSwitchService;
 	
@@ -114,6 +114,7 @@ public class CreditSwitchWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setTariffTypeId(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setTopupHistory(request.getTopupHistory()); 
 		transactionLog.setTopUpProfile(request.getTopUpProfile()); 
+		transactionLog.setRoleType(request.getRoleType());
 		transactionLog.setServiceProviderId(serviceId);
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
