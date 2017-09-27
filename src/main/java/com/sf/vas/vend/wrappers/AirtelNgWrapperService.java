@@ -120,12 +120,6 @@ public class AirtelNgWrapperService extends AbstractAirtimeTransferHandler {
 			queryService.createImmediately(transactionLog);
 		}
 		
-		AirtelVendRequestParams airtelVendRequestParams = new AirtelVendRequestParams();
-		
-		airtelVendRequestParams.setAmount(request.getAmount());
-		airtelVendRequestParams.setMsisdn(request.getMsisdn());
-		airtelVendRequestParams.setReference(ref);
-		
 		Exception vendException = null;
 		CommandResponseDto commandResponseDto = null;
 		
