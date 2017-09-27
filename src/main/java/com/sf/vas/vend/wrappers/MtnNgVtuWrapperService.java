@@ -29,7 +29,7 @@ import com.sf.vas.vend.service.VasVendQueryService;
  */
 
 @Stateless
-public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
+public class MtnNgVtuWrapperService extends AbstractAirtimeTransferHandler {
 	
 	@Inject
 	private VasVendQueryService vtuQueryService;
@@ -95,6 +95,7 @@ public class MtnNgVtuWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setTariffTypeId(getTariffTypeId(request.getAmount()));
 		transactionLog.setTopupHistory(request.getTopupHistory()); 
 		transactionLog.setTopUpProfile(request.getTopUpProfile()); 
+		transactionLog.setRoleType(request.getRoleType());
 		transactionLog.setServiceProviderId(serviceProviderId);
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);

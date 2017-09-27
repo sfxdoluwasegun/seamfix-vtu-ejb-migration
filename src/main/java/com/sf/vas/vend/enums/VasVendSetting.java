@@ -34,6 +34,10 @@ public enum VasVendSetting implements ISettingInfo {
     CREDIT_SWITCH_PRIVATE_KEY("G3BZ5PFLRE2QGOr0xr7UOA==", "Credit switch private key"),
     CREDIT_SWITCH_PUBLIC_KEY("Ly824mfwOmF5d9DTYZtNzg==", "Credit switch public key"),
     
+    AIRTEL_SERVICE_INIT_PATH("https://172.24.4.21:4443/pretups/C2SReceiver", "Airtel service init path"),
+    AIRTEL_RETAILER_MSISDN("09075482314", "Airtel retailer msisdn"),
+    AIRTEL_PASSWORD("jgX5oP9F8u7PMWNNeBhkug==", "Airtel password"),
+    AIRTEL_PIN("jgX5oP9F8u7PMWNNeBhkug==", "Airtel Pin"),
     
     ;
 

@@ -4,7 +4,7 @@
 
     <groupId>com.sf.vas</groupId>
     <artifactId>mtn-vtu-integration</artifactId>
-    <version>0.0.10-final</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>ejb</packaging>
 
     <name>mtn-vtu-integration</name>
@@ -62,7 +62,7 @@
 		<dependency>
 			<groupId>com.sf.vas</groupId>
 			<artifactId>airtime-vend</artifactId>
-		    <version>0.0.2-final</version>
+		    <version>0.0.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
         	<groupId>com.google.code.gson</groupId>

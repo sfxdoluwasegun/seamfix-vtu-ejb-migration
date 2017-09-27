@@ -38,7 +38,7 @@ import com.sf.vas.vend.util.VendUtil;
  */
 
 @Stateless
-public class GloNgVendWrapperService extends IAirtimeTransferHandler {
+public class GloNgVendWrapperService extends AbstractAirtimeTransferHandler {
 
 	private GloService gloService;
 	
@@ -55,8 +55,6 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 	
 	private final String DEFAULT_ORIGINATOR_MSISDN = "DEFAULT";
 	private final String DEFAULT_NOT_APPLICABLE = "NA";
-	
-	private VendUtil vendUtil = new VendUtil();
 	
 	@PostConstruct
 	private void init(){
@@ -113,6 +111,7 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setOriginatorMsisdn(DEFAULT_ORIGINATOR_MSISDN);
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
 		transactionLog.setProductId(productId);
+		transactionLog.setRoleType(request.getRoleType());
 		transactionLog.setSender(request.getSubscriber());
 		transactionLog.setSenderPrincipalId(senderPrincipalId); 
 		transactionLog.setTariffTypeId(DEFAULT_NOT_APPLICABLE);
@@ -122,9 +121,6 @@ public class GloNgVendWrapperService extends IAirtimeTransferHandler {
 		transactionLog.setServiceProviderId(DEFAULT_NOT_APPLICABLE);
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
-		
-		if (request.getRoleType() != null)
-			transactionLog.setRoleType(request.getRoleType());
 		
 		if(transactionLog.getPk() != null){
 			vtuQueryService.update(transactionLog);
