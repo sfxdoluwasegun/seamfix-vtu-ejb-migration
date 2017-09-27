@@ -13,6 +13,7 @@ import com.sf.vas.airtimevend.mtn.dto.VendResponseDto;
 import com.sf.vas.airtimevend.mtn.service.VtuMtnService;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -89,10 +90,11 @@ public class MtnNgVtuWrapperService extends AbstractAirtimeTransferHandler {
 		
 		transactionLog.setAmount(request.getAmount());
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
+		transactionLog.setDataPlan(request.getTopupHistory().getDataPlan()); 
 		transactionLog.setOriginatorMsisdn(originMsisdn);
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
 		transactionLog.setSender(request.getSubscriber());
-		transactionLog.setTariffTypeId(getTariffTypeId(request.getAmount()));
+		transactionLog.setTariffTypeId(getTariffTypeId(request.getTopupHistory().getTransactionType()));
 		transactionLog.setTopupHistory(request.getTopupHistory()); 
 		transactionLog.setTopUpProfile(request.getTopUpProfile()); 
 		transactionLog.setRoleType(request.getRoleType());
@@ -100,8 +102,6 @@ public class MtnNgVtuWrapperService extends AbstractAirtimeTransferHandler {
 		transactionLog.setNetworkCarrier(request.getNetworkCarrier());
 		transactionLog.setVtuStatus(Status.PENDING);
 		
-		if (request.getRoleType() != null)
-			transactionLog.setRoleType(request.getRoleType());
 		
 		if(transactionLog.getPk() != null){
 			vtuQueryService.update(transactionLog);
@@ -125,12 +125,16 @@ public class MtnNgVtuWrapperService extends AbstractAirtimeTransferHandler {
 	}	
 	
 	/**
-	 * this houses the logic for tariff type ids for amount based on the clarification from the VTU service providers
-	 * @param amount
+	 * this houses the logic for tariff type ids from the VTU service providers
+	 * @param transactionType
 	 * @return
 	 */
-	private String getTariffTypeId(BigDecimal amount) {
-		return "4";
+	private String getTariffTypeId(TransactionType transactionType) {
+		if(TransactionType.DATA.equals(transactionType)){
+			return "9"; // for data the tariff type is 9
+		} else {
+			return "4";
+		}
 	}
 
 	/**
