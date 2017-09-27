@@ -20,6 +20,7 @@ import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -93,8 +94,22 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 		CsNetwork csNetwork = getCsNetwork(request.getNetworkCarrier().getType());
 		String serviceId = "UNKNOWN";
 		
-		if(csNetwork != null){
-			serviceId = csNetwork.getServiceCode();
+		
+		if(TransactionType.DATA.equals(request.getTopupHistory().getTransactionType())){
+			
+			if(request.getTopupHistory().getDataPlan() == null){
+				throw new IllegalArgumentException("DATA transaction type requires a data plan. TopupHistory pk : "
+						+request.getTopupHistory().getPk());
+			}
+			
+			if(csNetwork != null){
+				serviceId = csNetwork.getDataServiceCode();
+			}
+		} else {
+
+			if(csNetwork != null){
+				serviceId = csNetwork.getServiceCode();
+			}
 		}
 		
 		VtuTransactionLog transactionLog;
@@ -109,6 +124,7 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
 		transactionLog.setClientReference(reference);
 		transactionLog.setOriginatorMsisdn(DEFAULT_NOT_APPLICABLE);
+		transactionLog.setDataPlan(request.getTopupHistory().getDataPlan()); 
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
 		transactionLog.setSender(request.getSubscriber());
 		transactionLog.setTariffTypeId(DEFAULT_NOT_APPLICABLE);
@@ -136,9 +152,13 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 		CreditSwitchVendResponseDto creditSwitchVendResponseDto = null;
 		
 		try {
-			creditSwitchVendResponseDto = creditSwitchService.sendAirtimeVendRequest(vendRequest);
+			if(TransactionType.DATA.equals(request.getTopupHistory().getTransactionType())){
+				creditSwitchVendResponseDto = creditSwitchService.sendDataVendRequest(vendRequest);
+			} else {
+				creditSwitchVendResponseDto = creditSwitchService.sendAirtimeVendRequest(vendRequest);
+			}
 		} catch (Exception e) {
-			log.error("Error sending airtime request through credit switch", e);
+			log.error("Error sending airtime/data request through credit switch", e);
 		}
 		
 		setResponse(transactionLog, creditSwitchVendResponseDto);
@@ -162,8 +182,6 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 			}
 			topupHistory.setDisplayFailureReason(getDisplayFailureReason(responseCode));
 			
-			notifySupport(responseCode, request);
-			
 			vendService.handleFailedVending(transactionLog);
 		}
 		
@@ -173,11 +191,6 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 		response.setTransactionId(transactionLog.getPk());
 		
 		return response;
-	}
-
-	private void notifySupport(CreditSwitchResponseCode responseCode, AirtimeTransferRequestDTO request) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private String getDisplayFailureReason(CreditSwitchResponseCode responseCode) {
@@ -212,10 +225,7 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 			CreditSwitchVendResponse creditSwitchVendResponse = restServiceResponse.getBody();
 			
 			String confirmCode = creditSwitchVendResponse.getConfirmCode();
-//			String mReference = creditSwitchVendResponse.getMReference(); // this is the client reference we sent in the request
-//			String recipient = creditSwitchVendResponse.getRecipient(); 
 			String statusCode = creditSwitchVendResponse.getStatusCode();
-//			String tranxDate = creditSwitchVendResponse.getTranxDate(); // we already have this essentially
 			String tranxReference = creditSwitchVendResponse.getTranxReference();
 			Map<String, Object> additionalProperties = creditSwitchVendResponse.getAdditionalProperties();
 			
