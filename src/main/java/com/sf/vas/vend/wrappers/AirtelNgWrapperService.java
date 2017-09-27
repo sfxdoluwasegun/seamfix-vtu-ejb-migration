@@ -9,6 +9,7 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 import com.sf.vas.airtimevend.airtel.artifacts.response.COMMAND;
+import com.sf.vas.airtimevend.airtel.dto.AirtelDataRequestParams;
 import com.sf.vas.airtimevend.airtel.dto.AirtelInitParams;
 import com.sf.vas.airtimevend.airtel.dto.AirtelVendRequestParams;
 import com.sf.vas.airtimevend.airtel.dto.CommandResponseDto;
@@ -17,6 +18,7 @@ import com.sf.vas.airtimevend.airtel.service.AirtelService;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -84,10 +86,10 @@ public class AirtelNgWrapperService extends AbstractAirtimeTransferHandler {
 	@Override
 	public AirtimeTransferResponse handleTransferAirtime(AirtimeTransferRequestDTO request) {
 		
-		String ref = getReference(20);
-		
 		AirtelInitParams initParams = airtelService.getInitParams();
 
+		String ref = getReference(20);
+		
 		VtuTransactionLog transactionLog;
 		
 		if(request.getVtuTransactionLog() != null){
@@ -100,6 +102,7 @@ public class AirtelNgWrapperService extends AbstractAirtimeTransferHandler {
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
 		transactionLog.setClientReference(ref);
 		transactionLog.setOriginatorMsisdn(initParams.getRetailerMsisdn());
+		transactionLog.setDataPlan(request.getTopupHistory().getDataPlan()); 
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
 		transactionLog.setSender(request.getSubscriber());
 		transactionLog.setTariffTypeId(DEFAULT_NOT_APPLICABLE);
@@ -127,7 +130,7 @@ public class AirtelNgWrapperService extends AbstractAirtimeTransferHandler {
 		CommandResponseDto commandResponseDto = null;
 		
 		try {
-			commandResponseDto = airtelService.sendAirtimeRequest(airtelVendRequestParams);
+			commandResponseDto = getCommandResponseDto(request, ref);
 		} catch (Exception e) {
 			log.error("Error calling airtel service", e);
 			vendException = e;
@@ -178,6 +181,39 @@ public class AirtelNgWrapperService extends AbstractAirtimeTransferHandler {
 		response.setTransactionId(transactionLog.getPk());
 		
 		return response;
+	}
+
+	private CommandResponseDto getCommandResponseDto(AirtimeTransferRequestDTO request, String ref) {
+
+		CommandResponseDto commandResponseDto;
+		
+		if(TransactionType.DATA.equals(request.getTopupHistory().getTransactionType())){
+			
+			if(request.getTopupHistory().getDataPlan() == null){
+				throw new IllegalArgumentException("DATA transaction type requires a data plan. TopupHistory pk : "
+						+request.getTopupHistory().getPk());
+			}
+			
+			AirtelDataRequestParams airtelDataRequestParams = new AirtelDataRequestParams();
+			
+			airtelDataRequestParams.setMsisdn(request.getMsisdn());
+			airtelDataRequestParams.setPlan(request.getTopupHistory().getDataPlan().getPlanId());
+			airtelDataRequestParams.setReference(ref);
+			
+			commandResponseDto = airtelService.sendDataRequest(airtelDataRequestParams);
+			
+		} else {
+		
+			AirtelVendRequestParams airtelVendRequestParams = new AirtelVendRequestParams();
+			
+			airtelVendRequestParams.setAmount(request.getAmount());
+			airtelVendRequestParams.setMsisdn(request.getMsisdn());
+			airtelVendRequestParams.setReference(ref);
+			
+			commandResponseDto = airtelService.sendAirtimeRequest(airtelVendRequestParams);
+		}
+		
+		return commandResponseDto;
 	}
 
 	private String getDisplayFailureReason(AirtelResponseCode code) {
