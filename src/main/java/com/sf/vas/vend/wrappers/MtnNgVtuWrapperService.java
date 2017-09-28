@@ -1,7 +1,5 @@
 package com.sf.vas.vend.wrappers;
 
-import java.math.BigDecimal;
-
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -13,6 +11,7 @@ import com.sf.vas.airtimevend.mtn.dto.VendResponseDto;
 import com.sf.vas.airtimevend.mtn.service.VtuMtnService;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.atjpa.enums.TopupType;
 import com.sf.vas.atjpa.enums.TransactionType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
@@ -130,7 +129,7 @@ public class MtnNgVtuWrapperService extends AbstractAirtimeTransferHandler {
 	 * @return
 	 */
 	private String getTariffTypeId(TransactionType transactionType) {
-		if(TransactionType.DATA.equals(transactionType)){
+		if(TopupType.DATA.equals(transactionType.getTopupType())){
 			return "9"; // for data the tariff type is 9
 		} else {
 			return "4";

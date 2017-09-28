@@ -7,8 +7,8 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJBTransactionRolledbackException;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+
 import com.sf.vas.airtimevend.glo.dto.GloVendInitParams;
-import com.sf.vas.airtimevend.glo.dto.RequestTopupExtraParams;
 import com.sf.vas.airtimevend.glo.dto.RequestTopupParams;
 import com.sf.vas.airtimevend.glo.dto.RequestTopupResponseDto;
 import com.sf.vas.airtimevend.glo.enums.GloServiceResponseCode;
@@ -21,6 +21,7 @@ import com.sf.vas.airtimevend.glo.soapartifacts.RequestTopupResponse;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
+import com.sf.vas.atjpa.enums.TopupType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -30,7 +31,6 @@ import com.sf.vas.vend.enums.ResponseCode;
 import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.service.VasVendQueryService;
 import com.sf.vas.vend.service.VendService;
-import com.sf.vas.vend.util.VendUtil;
 
 /**
  * @author DAWUZI
@@ -50,8 +50,6 @@ public class GloNgVendWrapperService extends AbstractAirtimeTransferHandler {
 	
 	@Inject
 	private EncryptionUtil encryptionUtil;
-	
-	private RequestTopupExtraParams defaultExtraParams = new RequestTopupExtraParams();
 	
 	private final String DEFAULT_ORIGINATOR_MSISDN = "DEFAULT";
 	private final String DEFAULT_NOT_APPLICABLE = "NA";
@@ -94,8 +92,22 @@ public class GloNgVendWrapperService extends AbstractAirtimeTransferHandler {
 		
 		String senderPrincipalId = initParams.getSenderPrincipalId(); // eg WEB7056670256
 		
-		String productId = "TOPUP";
-		RequestTopupType requestTopupType = RequestTopupType.AIRTIME;
+		String productId;
+		RequestTopupType requestTopupType;
+		
+		if(TopupType.DATA.equals(request.getTopupHistory().getTransactionType().getTopupType())){
+			
+			if(request.getTopupHistory().getDataPlan() == null){
+				throw new IllegalArgumentException("DATA transaction type requires a data plan. TopupHistory pk : "
+						+request.getTopupHistory().getPk());
+			}
+			
+			productId = request.getTopupHistory().getDataPlan().getPlanCode();
+			requestTopupType = RequestTopupType.DATA_BUNDLE;
+		} else {
+			productId = "TOPUP";
+			requestTopupType = RequestTopupType.AIRTIME;
+		}
 		
 		VtuTransactionLog transactionLog;
 		
@@ -109,6 +121,7 @@ public class GloNgVendWrapperService extends AbstractAirtimeTransferHandler {
 		transactionLog.setCallBackUrl(request.getCallbackUrl());
 		transactionLog.setClientReference(ref);
 		transactionLog.setOriginatorMsisdn(DEFAULT_ORIGINATOR_MSISDN);
+		transactionLog.setDataPlan(request.getTopupHistory().getDataPlan()); 
 		transactionLog.setDestinationMsisdn(request.getMsisdn());
 		transactionLog.setProductId(productId);
 		transactionLog.setRoleType(request.getRoleType());
@@ -143,7 +156,7 @@ public class GloNgVendWrapperService extends AbstractAirtimeTransferHandler {
 		Exception vendException = null;
 		
 		try {
-			requestTopupResponseDto = gloService.requestTopup(params, defaultExtraParams);
+			requestTopupResponseDto = gloService.requestTopup(params);
 		} catch (Exception e) {
 			log.error("error calling glo service", e);
 			vendException = e;
