@@ -20,7 +20,7 @@ import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.NetworkCarrierType;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.atjpa.enums.TransactionType;
+import com.sf.vas.atjpa.enums.TopupType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -95,7 +95,7 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 		String serviceId = "UNKNOWN";
 		
 		
-		if(TransactionType.DATA.equals(request.getTopupHistory().getTransactionType())){
+		if(TopupType.DATA.equals(request.getTopupHistory().getTransactionType().getTopupType())){
 			
 			if(request.getTopupHistory().getDataPlan() == null){
 				throw new IllegalArgumentException("DATA transaction type requires a data plan. TopupHistory pk : "
@@ -152,7 +152,7 @@ public class CreditSwitchWrapperService extends AbstractAirtimeTransferHandler {
 		CreditSwitchVendResponseDto creditSwitchVendResponseDto = null;
 		
 		try {
-			if(TransactionType.DATA.equals(request.getTopupHistory().getTransactionType())){
+			if(TopupType.DATA.equals(request.getTopupHistory().getTransactionType().getTopupType())){
 				creditSwitchVendResponseDto = creditSwitchService.sendDataVendRequest(vendRequest);
 			} else {
 				creditSwitchVendResponseDto = creditSwitchService.sendAirtimeVendRequest(vendRequest);

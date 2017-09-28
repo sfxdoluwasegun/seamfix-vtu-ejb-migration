@@ -21,7 +21,7 @@ import com.sf.vas.airtimevend.glo.soapartifacts.RequestTopupResponse;
 import com.sf.vas.atjpa.entities.TopupHistory;
 import com.sf.vas.atjpa.entities.VtuTransactionLog;
 import com.sf.vas.atjpa.enums.Status;
-import com.sf.vas.atjpa.enums.TransactionType;
+import com.sf.vas.atjpa.enums.TopupType;
 import com.sf.vas.utils.crypto.EncryptionUtil;
 import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.exception.VasRuntimeException;
@@ -95,14 +95,14 @@ public class GloNgVendWrapperService extends AbstractAirtimeTransferHandler {
 		String productId;
 		RequestTopupType requestTopupType;
 		
-		if(TransactionType.DATA.equals(request.getTopupHistory().getTransactionType())){
+		if(TopupType.DATA.equals(request.getTopupHistory().getTransactionType().getTopupType())){
 			
 			if(request.getTopupHistory().getDataPlan() == null){
 				throw new IllegalArgumentException("DATA transaction type requires a data plan. TopupHistory pk : "
 						+request.getTopupHistory().getPk());
 			}
 			
-			productId = request.getTopupHistory().getDataPlan().getPlanId();
+			productId = request.getTopupHistory().getDataPlan().getPlanCode();
 			requestTopupType = RequestTopupType.DATA_BUNDLE;
 		} else {
 			productId = "TOPUP";
