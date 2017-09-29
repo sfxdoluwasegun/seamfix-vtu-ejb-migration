@@ -39,6 +39,7 @@ public enum VasVendSetting implements ISettingInfo {
     AIRTEL_PASSWORD("jgX5oP9F8u7PMWNNeBhkug==", "Airtel password"),
     AIRTEL_PIN("jgX5oP9F8u7PMWNNeBhkug==", "Airtel Pin"),
     
+    USE_CREDIT_SWITCH_FOR_AIRTEL("TRUE", "Use credit switch for airtel recharge"),
     ;
 
 	VasVendSetting(String defaultValue, String defaultDescription) {
