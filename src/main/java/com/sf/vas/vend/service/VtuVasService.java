@@ -29,6 +29,7 @@ import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.vend.enums.ResponseCode;
+import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.wrappers.CreditSwitchWrapperService;
 import com.sf.vas.vend.wrappers.GloNgVendWrapperService;
 import com.sf.vas.vend.wrappers.AbstractAirtimeTransferHandler;
@@ -105,7 +106,13 @@ public class VtuVasService {
 		case GLO_NG:
 			return gloNgVendWrapperService;
 		case AIRTEL_NG:
-			return airtelNgWrapperService;
+			if(vtuQueryService.getSettingValueBoolean(VasVendSetting.USE_CREDIT_SWITCH_FOR_AIRTEL)){
+				log.info("using credit switch service");
+				return creditSwitchWrapperService;
+			} else {
+				log.info("using airtel service");
+				return airtelNgWrapperService;
+			}
 		case NINE_MOBILE:
 			return creditSwitchWrapperService;
 		default:
