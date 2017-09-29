@@ -29,9 +29,11 @@ import com.sf.vas.utils.exception.VasException;
 import com.sf.vas.utils.restartifacts.vtu.AirtimeTransferResponse;
 import com.sf.vas.vend.dto.AirtimeTransferRequestDTO;
 import com.sf.vas.vend.enums.ResponseCode;
+import com.sf.vas.vend.enums.VasVendSetting;
 import com.sf.vas.vend.wrappers.CreditSwitchWrapperService;
 import com.sf.vas.vend.wrappers.GloNgVendWrapperService;
-import com.sf.vas.vend.wrappers.IAirtimeTransferHandler;
+import com.sf.vas.vend.wrappers.AbstractAirtimeTransferHandler;
+import com.sf.vas.vend.wrappers.AirtelNgWrapperService;
 import com.sf.vas.vend.wrappers.MtnNgVtuWrapperService;
 
 /**
@@ -53,6 +55,9 @@ public class VtuVasService {
 	
 	@Inject
 	CreditSwitchWrapperService creditSwitchWrapperService;
+	
+	@Inject
+	AirtelNgWrapperService airtelNgWrapperService;
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 
@@ -83,12 +88,12 @@ public class VtuVasService {
 
 		NetworkCarrierType type = carrier.getType() == null ? NetworkCarrierType.MTN_NG : carrier.getType();
 
-		IAirtimeTransferHandler handler = getAirtimeTransferHandler(type);
+		AbstractAirtimeTransferHandler handler = getAirtimeTransferHandler(type);
 
 		return handler.handleTransferAirtime(request);
 	}
 
-	private IAirtimeTransferHandler getAirtimeTransferHandler(NetworkCarrierType type) {
+	private AbstractAirtimeTransferHandler getAirtimeTransferHandler(NetworkCarrierType type) {
 
 		log.info("type : "+type);
 
@@ -101,9 +106,15 @@ public class VtuVasService {
 		case GLO_NG:
 			return gloNgVendWrapperService;
 		case AIRTEL_NG:
+			if(vtuQueryService.getSettingValueBoolean(VasVendSetting.USE_CREDIT_SWITCH_FOR_AIRTEL)){
+				log.info("using credit switch service");
+				return creditSwitchWrapperService;
+			} else {
+				log.info("using airtel service");
+				return airtelNgWrapperService;
+			}
 		case NINE_MOBILE:
 			return creditSwitchWrapperService;
-
 		default:
 			return mtnNgVtuWrapperService;
 		}
