@@ -4,7 +4,7 @@
 
     <groupId>com.sf.vas</groupId>
     <artifactId>mtn-vtu-integration</artifactId>
-    <version>0.1.0-final</version>
+    <version>0.2.0-SNAPSHOT</version>
     <packaging>ejb</packaging>
 
     <name>mtn-vtu-integration</name>
@@ -74,12 +74,12 @@
 		<repository>
 			<id>deployment</id>
 			<name>Internal Releases</name>
-			<url>http://singlewindow.seamfix.com:7997/nexus/content/repositories/releases</url>
+			<url>https://nexus.seamfix.com/nexus/content/repositories/releases</url>
 		</repository>
 		<snapshotRepository>
 			<id>deployment</id>
 			<name>Internal Releases</name>
-			<url>http://singlewindow.seamfix.com:7997/nexus/content/repositories/snapshots</url>
+			<url>https://nexus.seamfix.com/nexus/content/repositories/snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
 
